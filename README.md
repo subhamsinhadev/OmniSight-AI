@@ -1,3 +1,5 @@
+![OmniSight AI Banner](docs/banner.png)
+
 # OmniSight AI
 
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
