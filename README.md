@@ -181,6 +181,33 @@ N --> O[Payment System]
 
 O --> P[Instant Weekly Payout]
 ```
+
+---
+
+## AI Workflow
+
+```mermaid
+flowchart LR
+
+A[Historical Data] --> B[Data Processing]
+
+B --> C[Risk Prediction Model]
+B --> D[Disruption Forecast Model]
+B --> E[Fraud Detection Model]
+
+C --> F[Dynamic Premium Calculation]
+
+D --> G[Disruption Probability Score]
+
+G --> H[Parametric Trigger Engine]
+
+H --> I[Auto Claim Processing]
+
+E --> J[Fraud Verification]
+
+I --> K[Weekly Payout System]
+```
+
 ---
 
 # Tech Stack
