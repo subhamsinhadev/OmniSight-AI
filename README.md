@@ -168,6 +168,9 @@ OmniSight AI is implemented as a **web platform** to ensure:
 - Traffic Data APIs  
 - Simulated Payment Systems  
 
+## Database
+- SQL
+
 ---
 
 # System Workflow
