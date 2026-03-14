@@ -1,10 +1,40 @@
-# OmniSight AI  
+# OmniSight AI
+
+![License](https://img.shields.io/badge/License-MIT-green.svg)
+![Python](https://img.shields.io/badge/Python-3.10-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688)
+![React](https://img.shields.io/badge/React-Frontend-61DAFB)
+![AI](https://img.shields.io/badge/AI-ML-orange)
+![Status](https://img.shields.io/badge/Status-Hackathon%20Prototype-purple)
+![Contributions](https://img.shields.io/badge/Contributions-Welcome-brightgreen)
+
 ### AI-Powered Income Protection Platform for India’s Gig Delivery Workforce
 
 OmniSight AI is an **AI-enabled parametric income protection platform** designed to safeguard the livelihoods of India's gig delivery workforce. The platform automatically detects external disruptions that prevent delivery partners from working and **triggers instant compensation without requiring manual claims**.
 
 It focuses on delivery partners working across **food delivery, e-commerce, and quick-commerce platforms**, ensuring they have financial protection against uncontrollable external events.
+## Tech Stack
 
+**Frontend**
+- React
+- TailwindCSS
+
+**Backend**
+- FastAPI
+- Python
+
+**AI/ML**
+- Scikit-Learn
+- Pandas
+- NumPy
+
+**APIs**
+- Weather API
+- Traffic Data API
+
+**Other Tools**
+- LangChain
+- GitHub
 ---
 
 ## Problem Statement
