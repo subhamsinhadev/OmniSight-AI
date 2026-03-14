@@ -156,7 +156,6 @@ OmniSight AI is implemented as a **web platform** to ensure:
 
 ```mermaid
 flowchart TD
-```
 A[Delivery Partner] --> B[OmniSight Web Platform]
 
 B --> C[Worker Dashboard]
@@ -181,7 +180,7 @@ M --> N[Automatic Claim Initiation]
 N --> O[Payment System]
 
 O --> P[Instant Weekly Payout]
-
+```
 ---
 
 # Tech Stack
