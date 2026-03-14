@@ -7,34 +7,18 @@
 ![AI](https://img.shields.io/badge/AI-ML-orange)
 ![Status](https://img.shields.io/badge/Status-Hackathon%20Prototype-purple)
 ![Contributions](https://img.shields.io/badge/Contributions-Welcome-brightgreen)
+![React](https://img.shields.io/badge/Frontend-React-blue)
+![FastAPI](https://img.shields.io/badge/Backend-FastAPI-green)
+![Python](https://img.shields.io/badge/Language-Python-yellow)
+![Scikit-Learn](https://img.shields.io/badge/ML-ScikitLearn-orange)
+![SQL](https://img.shields.io/badge/Database-SQL-lightgrey)
 
 ### AI-Powered Income Protection Platform for India’s Gig Delivery Workforce
 
 OmniSight AI is an **AI-enabled parametric income protection platform** designed to safeguard the livelihoods of India's gig delivery workforce. The platform automatically detects external disruptions that prevent delivery partners from working and **triggers instant compensation without requiring manual claims**.
 
 It focuses on delivery partners working across **food delivery, e-commerce, and quick-commerce platforms**, ensuring they have financial protection against uncontrollable external events.
-## Tech Stack
 
-**Frontend**
-- React
-- TailwindCSS
-
-**Backend**
-- FastAPI
-- Python
-
-**AI/ML**
-- Scikit-Learn
-- Pandas
-- NumPy
-
-**APIs**
-- Weather API
-- Traffic Data API
-
-**Other Tools**
-- LangChain
-- GitHub
 ---
 
 ## Problem Statement
@@ -243,21 +227,28 @@ I --> K[Weekly Payout System]
 # Tech Stack
 
 ## Frontend
-- React.js  
-- Worker Dashboard  
-- Admin Dashboard  
+- **React.js** – User interface for workers and admins  
+- **TailwindCSS** – Modern responsive UI styling  
 
 ## Backend
-- FastAPI  
-- LangChain for AI-powered risk profiling and document intelligence  
+- **Python** – Core backend language  
+- **FastAPI** – High-performance API framework  
+
+## AI / LLM Orchestration
+- **LangChain** – AI-powered document intelligence and risk analysis  
+
+## AI & Machine Learning
+- **Scikit-Learn** – Risk prediction models  
+- **Pandas** – Data processing and analysis  
+- **NumPy** – Numerical computations  
 
 ## APIs & Integrations
-- Weather APIs  
-- Traffic Data APIs  
-- Simulated Payment Systems  
+- **Weather APIs** – Detect weather-related disruptions  
+- **Traffic Data APIs** – Monitor delivery route conditions  
+- **Simulated Payment Systems** – Trigger instant payouts  
 
 ## Database
-- SQL
+- **SQL Database** – Stores worker data, risk profiles, and claims
 
 ---
 
