@@ -152,6 +152,38 @@ OmniSight AI is implemented as a **web platform** to ensure:
 
 ---
 
+## System Architecture
+
+```mermaid
+flowchart TD
+```
+A[Delivery Partner] --> B[OmniSight Web Platform]
+
+B --> C[Worker Dashboard]
+B --> D[Admin Dashboard]
+
+B --> E[FastAPI Backend]
+
+E --> F[Risk Prediction Model]
+E --> G[Fraud Detection Model]
+E --> H[Disruption Monitoring Engine]
+
+H --> I[Weather API]
+H --> J[Traffic API]
+H --> K[City Disruption Data]
+
+F --> L[Dynamic Premium Calculator]
+
+H --> M[Parametric Trigger Engine]
+
+M --> N[Automatic Claim Initiation]
+
+N --> O[Payment System]
+
+O --> P[Instant Weekly Payout]
+
+---
+
 # Tech Stack
 
 ## Frontend
