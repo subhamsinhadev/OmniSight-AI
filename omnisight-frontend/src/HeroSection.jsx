@@ -1,56 +1,79 @@
 // src/HeroSection.jsx
 import React from 'react';
+import { Link } from 'react-router-dom'; // Import Link for navigation
+import { Shield, ArrowRight } from 'lucide-react';
 
 const HeroSection = () => {
   return (
-    <section className="bg-omni-dark text-gray-100 min-h-screen flex flex-col justify-center items-center font-sans overflow-hidden">
-      {/* Background Subtle Gradient Effect */}
-      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-10" />
-
-      {/* Main Content Container */}
-      <div className="container mx-auto px-6 py-24 text-center z-10">
-        
-        {/* The 'Luminous' Pulsing Shield Icon/Logo Area */}
-        <div className="mb-12 flex justify-center">
-            <div className="relative">
-                <div className="absolute inset-0 rounded-full bg-omni-emerald opacity-20 blur-2xl transform scale-150 animate-pulse" />
-                <div className="relative border-4 border-omni-emerald bg-omni-dark p-6 rounded-full shadow-lg">
-                    {/* Placeholder OmniSight AI Icon (Replace with actual SVG/Image) */}
-                    <svg className="w-16 h-16 text-omni-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                </div>
-            </div>
+    <section className="bg-omni-dark text-gray-100 min-h-screen flex flex-col font-sans overflow-hidden relative">
+      
+      {/* --- PREMIUM NAVBAR --- */}
+      <nav className="z-50 flex items-center justify-between px-6 py-6 container mx-auto">
+        <div className="flex items-center gap-2 cursor-pointer">
+          <div className="p-1.5 bg-omni-emerald rounded-lg">
+            <Shield className="w-6 h-6 text-omni-dark" strokeWidth={2.5} />
+          </div>
+          <span className="text-xl font-bold tracking-tight">OmniSight <span className="text-omni-emerald">AI</span></span>
         </div>
 
-        {/* Luminous/Emerald Gradient Title */}
-        <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight">
+        {/* Navigation Links (Hidden on mobile) */}
+        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
+          <a href="#" className="hover:text-omni-emerald transition-colors">Solutions</a>
+          <a href="#" className="hover:text-omni-emerald transition-colors">Risk Models</a>
+          <a href="#" className="hover:text-omni-emerald transition-colors">Pricing</a>
+        </div>
+
+        {/* CTA in Navbar */}
+        <div className="flex items-center gap-4">
+          <Link to="/auth" className="text-sm font-semibold hover:text-omni-emerald transition-colors">
+            Log in
+          </Link>
+          <Link to="/auth" className="bg-omni-emerald text-omni-dark px-5 py-2.5 rounded-full text-sm font-bold hover:bg-green-400 transition-all shadow-lg shadow-omni-emerald/20">
+            Sign Up
+          </Link>
+        </div>
+      </nav>
+
+      {/* --- HERO CONTENT --- */}
+      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 pointer-events-none" />
+      
+      <div className="container mx-auto px-6 flex-grow flex flex-col justify-center items-center text-center z-10 py-20">
+        
+        {/* Status Badge */}
+        <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-full mb-8 backdrop-blur-md">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-omni-emerald opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-omni-emerald"></span>
+          </span>
+          <span className="text-xs font-bold tracking-widest uppercase text-gray-300">Hackathon Prototype v1.0</span>
+        </div>
+
+        <h1 className="text-5xl md:text-8xl font-extrabold mb-8 leading-[1.1] tracking-tight">
           Income Protection, <br />
           <span className="bg-gradient-to-r from-green-300 via-omni-emerald to-emerald-600 bg-clip-text text-transparent">
             Automated by AI.
           </span>
         </h1>
 
-        {/* Concise and Impactful Subtitle */}
-        <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto mb-12">
-          AI-powered parametric insurance safeguards India's gig workforce. When weather, traffic, or platform disruptions hit, instant payouts trigger—no manual claims, no delays.
+        <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-12 leading-relaxed">
+          The first AI-enabled parametric platform for India’s gig delivery workforce. 
+          Instant payouts triggered by external disruptions. No claims. No delays.
         </p>
 
-        {/* Call to Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <button className="bg-omni-emerald text-omni-dark font-bold px-10 py-4 rounded-full text-lg shadow-xl hover:bg-green-400 transition-colors duration-300 transform hover:scale-105 active:scale-95">
-            Get Protected Now
-          </button>
+        <div className="flex flex-col sm:flex-row gap-5 justify-center items-center">
+          <Link to="/auth" className="group bg-omni-emerald text-omni-dark font-black px-10 py-5 rounded-full text-lg shadow-2xl hover:bg-green-400 transition-all flex items-center gap-2">
+            Get Protected
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </Link>
           
-          <button className="border-2 border-gray-600 text-gray-300 font-semibold px-10 py-4 rounded-full text-lg hover:border-gray-400 hover:text-white transition-colors duration-300">
-            Learn How It Works
+          <button className="bg-white/5 border border-white/10 text-white font-bold px-10 py-5 rounded-full text-lg hover:bg-white/10 transition-all backdrop-blur-sm">
+            Watch Demo
           </button>
         </div>
-
       </div>
 
-      {/* Optional: 'Disruption Map' Background Element (Purely visual placeholder for the idea) */}
-      <div className="absolute bottom-0 right-0 w-1/3 h-1/2 bg-omni-dark-card rounded-tl-full opacity-30 shadow-2xl z-0" />
+      {/* Background Decorative Blur */}
+      <div className="absolute top-[20%] left-[-10%] w-[500px] h-[500px] bg-omni-emerald/10 rounded-full blur-[120px] -z-10" />
     </section>
   );
 };
