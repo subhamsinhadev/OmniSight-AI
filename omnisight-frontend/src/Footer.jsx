@@ -85,7 +85,7 @@ const Footer = () => {
           <div className="flex items-center gap-5">
 
             <a
-              href="https://linkedin.com"
+              href="#"
               target="_blank"
               rel="noopener noreferrer"
               className="p-3 rounded-full bg-gray-800 hover:bg-emerald-500 hover:text-black transition"
@@ -94,7 +94,7 @@ const Footer = () => {
             </a>
 
             <a
-              href="https://twitter.com"
+              href="#"
               target="_blank"
               rel="noopener noreferrer"
               className="p-3 rounded-full bg-gray-800 hover:bg-emerald-500 hover:text-black transition"
@@ -112,7 +112,7 @@ const Footer = () => {
             </a>
 
             <a
-              href="https://yourwebsite.com"
+              href="#"
               target="_blank"
               rel="noopener noreferrer"
               className="p-3 rounded-full bg-gray-800 hover:bg-emerald-500 hover:text-black transition"
