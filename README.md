@@ -679,8 +679,9 @@ OmniSight AI moves beyond basic GPS verification by introducing a **Multi-Signal
 
 This creates a stronger, smarter, and more scalable anti-spoofing system that can defend against coordinated fraud while still delivering a worker-friendly experience.
 
-
-
+---
+## AntiSpoofing System Block Diagram
+![OmniSight AI AntiSpoofing](docs/AntiSpoof.png)
 
 ---
 
