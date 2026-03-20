@@ -373,25 +373,25 @@ Detect whether the device is real, untampered, and not using spoofing tools.
 
 ### What We Check
 
-* **Mock Location Detection**
+* **Mock Location Detection** -
   Detect if mock location is enabled, fake GPS apps are present, or GPS location does not match network location.
 
-* **Root / Jailbreak Detection**
+* **Root / Jailbreak Detection** -
   Check whether the device is rooted or jailbroken, since such devices can bypass security and modify app behavior.
 
-* **Emulator / Virtual Device Detection**
+* **Emulator / Virtual Device Detection** -
   Detect whether the app is running inside an emulator or virtual device often used for large-scale fraud.
 
-* **App Integrity Verification**
+* **App Integrity Verification** -
   Ensure the installed app is the official version and has not been modified or tampered with.
 
-* **Play Integrity / SafetyNet APIs**
+* **Play Integrity / SafetyNet APIs** -
   Use platform integrity signals to validate device certification, app authenticity, and secure runtime status.
 
-* **SIM and Network Consistency**
+* **SIM and Network Consistency** -
   Verify whether SIM presence, mobile network region, and reported location align logically.
 
-* **Background Behavior Signals**
+* **Background Behavior Signals** -
   Detect suspicious patterns such as no sensor activity, fully static device behavior, or unrealistic runtime characteristics.
 
 ### Output of This Layer
