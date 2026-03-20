@@ -385,7 +385,7 @@ Detect whether the device is real, untampered, and not using spoofing tools.
 * **App Integrity Verification**
   Ensure the installed app is the official version and has not been modified or tampered with.
 
-* **Play Integrity / Safety APIs**
+* **Play Integrity / SafetyNet APIs**
   Use platform integrity signals to validate device certification, app authenticity, and secure runtime status.
 
 * **SIM and Network Consistency**
