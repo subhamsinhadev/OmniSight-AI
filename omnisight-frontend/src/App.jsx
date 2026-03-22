@@ -3,6 +3,7 @@ import HeroSection from './HeroSection';
 import FeatureGrid from './FeatureGrid';
 import AuthPage from './AuthPage';
 import Footer from "./Footer";
+import ClientDashboard from './ClientDashboard';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         } />
 
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/dashboard" element={<ClientDashboard />} />
       </Routes>
 
     </Router>
