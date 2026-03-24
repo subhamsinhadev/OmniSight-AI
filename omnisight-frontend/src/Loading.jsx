@@ -26,20 +26,21 @@ const Loading = ({ onFinish }) => {
 
   return (
     <div
-      className={`fixed inset-0 z-[9999] overflow-hidden bg-black transition-opacity duration-700 ${
-        fadeOut ? "opacity-0 pointer-events-none" : "opacity-100"
-      }`}
-    >
-     <video
-        src="/Intro.mp4"
-        autoPlay
-        muted
-        playsInline
-        preload="auto"
-        onEnded={finishLoading}
-        className="absolute inset-0 h-full w-full object-cover"
-        style={{ objectPosition: "center" }}
-        />
+  className={`fixed inset-0 z-[9999] overflow-hidden bg-black transition-opacity duration-700 ${
+    fadeOut ? "opacity-0 pointer-events-none" : "opacity-100"
+  }`}
+>
+  <video
+    src="Intro.mp4"
+    autoPlay
+    muted
+    playsInline
+    preload="auto"
+    onEnded={finishLoading}
+    className="absolute inset-0 h-full w-full object-cover"
+    style={{ objectPosition: " center center" }}
+  />
+
     </div>
   );
 };
