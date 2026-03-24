@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import introVideo from "./assets/intro.mp4";
+// import introVideo from "public/Intro.mp4";
 
 const Loading = ({ onFinish }) => {
   const [fadeOut, setFadeOut] = useState(false);
@@ -31,7 +31,7 @@ const Loading = ({ onFinish }) => {
       }`}
     >
      <video
-        src={introVideo}
+        src="/Intro.mp4"
         autoPlay
         muted
         playsInline
