@@ -11,15 +11,15 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI(title="OmniSight AI API")
 
 # --- CORS CONFIGURATION ---
-origins = [
-    "http://localhost:5173",          # Local Vite Development
-    "http://localhost:3000",
-    "https://omni-sight-ai.vercel.app", # Vercel Frontend
-]
+# origins = [
+#     "http://localhost:5173",          # Local Vite Development
+#     "http://localhost:3000",
+#     "https://omni-sight-ai.vercel.app", # Vercel Frontend
+# ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins, 
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
