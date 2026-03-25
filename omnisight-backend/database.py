@@ -1,24 +1,15 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-import os
-from dotenv import load_dotenv
 
-load_dotenv()
+# This creates a local file named omnisight.db in your backend folder
+SQLALCHEMY_DATABASE_URL = "sqlite:///./omnisight.db"
 
-# Supabase provides a full connection string. 
-# We'll use the environment variable DATABASE_URL.
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-if not DATABASE_URL:
-    # Fallback for local testing if DB is not set
-    DATABASE_URL = "sqlite:///./test.db"
-
-engine = create_engine(DATABASE_URL)
-
-SessionLocal = sessionmaker(
-    bind=engine,
-    autoflush=False,
-    autocommit=False
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, 
+    # check_same_thread is ONLY needed for SQLite
+    connect_args={"check_same_thread": False}
 )
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
