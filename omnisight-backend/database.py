@@ -1,8 +1,14 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
+import os
 
-# This creates a local file named omnisight.db in your backend folder
-SQLALCHEMY_DATABASE_URL = "sqlite:///./omnisight.db"
+if os.environ.get("RENDER"):
+    SQLALCHEMY_DATABASE_URL = "sqlite:////tmp/omnisight.db"
+else:
+    SQLALCHEMY_DATABASE_URL = "sqlite:///./omnisight.db"
+
+# # This creates a local file named omnisight.db in your backend folder
+# SQLALCHEMY_DATABASE_URL = "sqlite:///./omnisight.db"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, 
