@@ -19,8 +19,11 @@ def startup():
 # --- CORS CONFIGURATION ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # you can restrict later
-    allow_credentials=False,
+    allow_origins=[
+        "http://localhost:5173",
+        "https://omni-sight-ai.vercel.app"
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -28,9 +31,10 @@ app.add_middleware(
 # --- GLOBAL ERROR HANDLER ---
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
+    print("❌ ERROR:", exc)  # for debugging logs
     return JSONResponse(
         status_code=500,
-        content={"detail": f"Backend Error: {str(exc)}"},
+        content={"detail": "Internal Server Error"},
     )
 
 # --- DB Dependency ---
@@ -48,30 +52,22 @@ def get_db():
 def home():
     return {"status": "online", "message": "OmniSight AI Protocol Operational"}
 
-# ✅ FIXED SIGNUP
+# SIGNUP
 @app.post("/signup", status_code=status.HTTP_201_CREATED)
 def signup(user: schemas.UserSignup, db: Session = Depends(get_db)):
-    # Basic validations
+    # validations
     if not user.password or user.password.strip() == "":
         raise HTTPException(status_code=400, detail="Password cannot be empty")
-    
+
     if len(user.password) < 6:
         raise HTTPException(status_code=400, detail="Password too short")
 
-    # 🔥 FIX: bcrypt max length check
-    if len(user.password.encode("utf-8")) > 72:
-        raise HTTPException(
-            status_code=400,
-            detail="Password too long (max 72 characters)"
-        )
-
-    # Check existing user
+    # check existing user
     existing_user = db.query(models.User).filter(models.User.email == user.email).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    # 🔥 SAFE HASHING (truncate just in case)
-    hashed_password = auth.hash_password(user.password[:72])
+    hashed_password = auth.hash_password(user.password)
 
     new_user = models.User(
         name=user.name,
