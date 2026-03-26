@@ -1,31 +1,32 @@
 from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.responses import JSONResponse # Added for exception handler
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 import models, schemas, auth
-from database import SessionLocal, engine, Base
+from database import SessionLocal, engine
 from typing import List
-
-# Initialize database tables
-# With Clever Cloud MySQL, this will create your tables automatically on first run
-models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="OmniSight AI API")
 
-# --- CORS CONFIGURATION (HACKATHON MODE) ---
-# Origins = ["*"] and allow_credentials=False is the most compatible way 
-# to ensure Vercel can talk to Render without browser blocks.
+# --- STARTUP EVENT (FIXED) ---
+@app.on_event("startup")
+def startup():
+    try:
+        models.Base.metadata.create_all(bind=engine)
+        print("✅ DB connected & tables created")
+    except Exception as e:
+        print("❌ DB ERROR:", e)
+
+# --- CORS CONFIGURATION ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --- GLOBAL ERROR CATCHER ---
-# This ensures that if the DB crashes, we see the ACTUAL error message 
-# in the browser console instead of just a generic "CORS Error"
+# --- GLOBAL ERROR HANDLER ---
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
     return JSONResponse(
@@ -33,7 +34,7 @@ async def global_exception_handler(request, exc):
         content={"detail": f"Backend Error: {str(exc)}"},
     )
 
-# DB Dependency
+# --- DB Dependency ---
 def get_db():
     db = SessionLocal()
     try:
@@ -70,11 +71,13 @@ def signup(user: schemas.UserSignup, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+
     return {"message": "Account created successfully"}
 
 @app.post("/login")
 def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
+
     if not db_user or not auth.verify_password(user.password, db_user.password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
@@ -85,18 +88,21 @@ def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
     })
 
     return {
-        "access_token": token, 
+        "access_token": token,
         "token_type": "bearer",
         "role": db_user.role,
         "name": db_user.name
     }
 
-# --- DASHBOARD DATA ENDPOINTS ---
+# --- DASHBOARD ENDPOINTS ---
 
 @app.get("/client/dashboard-stats")
-def get_client_stats(current_user = Depends(auth.require_role("client")), db: Session = Depends(get_db)):
+def get_client_stats(
+    current_user = Depends(auth.require_role("client")),
+    db: Session = Depends(get_db)
+):
     return {
-        "balance": "₹1,250", 
+        "balance": "₹1,250",
         "status": "Shield Active",
         "zone": "Asansol - Sector 2",
         "recent_payouts": [
@@ -106,7 +112,9 @@ def get_client_stats(current_user = Depends(auth.require_role("client")), db: Se
     }
 
 @app.get("/admin/system-status")
-def get_admin_stats(current_user = Depends(auth.require_role("admin"))):
+def get_admin_stats(
+    current_user = Depends(auth.require_role("admin"))
+):
     return {
         "total_partners": 12402,
         "active_triggers": 3,
@@ -115,7 +123,11 @@ def get_admin_stats(current_user = Depends(auth.require_role("admin"))):
     }
 
 @app.post("/admin/simulate-disruption")
-def trigger_disruption(zone: str, trigger_type: str, current_user = Depends(auth.require_role("admin"))):
+def trigger_disruption(
+    zone: str,
+    trigger_type: str,
+    current_user = Depends(auth.require_role("admin"))
+):
     return {
         "status": "triggered",
         "message": f"Parametric event {trigger_type} activated for {zone}. AI is processing payouts."
