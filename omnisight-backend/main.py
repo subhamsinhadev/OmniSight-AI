@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 import models, schemas, auth
 from database import SessionLocal, engine
+from pricing import calculate_weekly_premium
 
 app = FastAPI(title="OmniSight AI API")
 
@@ -142,4 +143,14 @@ def trigger_disruption(
     return {
         "status": "triggered",
         "message": f"Parametric event {trigger_type} activated for {zone}. AI is processing payouts."
+    }
+
+@app.get("/get-quote")
+def get_insurance_quote(city: str, tier: str, income: float):
+    premium = calculate_weekly_premium(city, tier, income)
+    return {
+        "weekly_premium": premium,
+        "currency": "INR",
+        "coverage_limit": income * 7,
+        "billing_cycle": "Weekly"
     }

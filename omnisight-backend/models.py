@@ -10,3 +10,8 @@ class User(Base):
     email = Column(String(255), unique=True, index=True)
     password = Column(String(255))
     role = Column(String(50))
+
+    # Fields for Actuarial Pricing
+    city = Column(String(100), default="Asansol")
+    avg_daily_income = Column(Float, default=500.0)  # Avg income for a delivery partner
+    activity_tier = Column(String(20), default="silver") # gold, silver, bronze
