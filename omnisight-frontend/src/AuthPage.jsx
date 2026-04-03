@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Shield, Mail, Lock, User, ChevronRight } from 'lucide-react';
+import { loginUser, signupUser } from "./apis/auth";
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -9,44 +10,49 @@ const AuthPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  //  DYNAMIC API URL: Uses environment variable or falls back to local
-  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
-
   const navigate = useNavigate();
+
+  // ✅ Redirect if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (token) {
+      if (role === "admin") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/client/dashboard");
+      }
+    }
+  }, []);
+
+  // ✅ SINGLE clean handleSubmit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const url = isLogin ? "/login" : "/signup";
 
-    // Basic Validation
+    // Validation
     if (!email || !email.includes("@")) return alert("Enter a valid email");
-    if (!password || password.length < 6) return alert("Password must be at least 6 characters");
-    if (!isLogin && (!name || name.trim().length < 2)) return alert("Enter a valid name");
+    if (!password || password.length < 6)
+      return alert("Password must be at least 6 characters");
+    if (!isLogin && (!name || name.trim().length < 2))
+      return alert("Enter a valid name");
 
-    const body = isLogin 
-      ? { email, password } 
+    const body = isLogin
+      ? { email, password }
       : { name, email, password, role };
 
     try {
-      const res = await fetch(`${API_BASE_URL}${url}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
+      const response = isLogin
+        ? await loginUser(body)
+        : await signupUser(body);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.detail || "Something went wrong");
-        return;
-      }
+      const data = response.data;
 
       if (isLogin) {
-        //  Clear old session (important)
         localStorage.removeItem("token");
         localStorage.removeItem("role");
         localStorage.removeItem("userName");
 
-        //  Save new session
         if (!data.access_token) {
           alert("Login failed: No token received");
           return;
@@ -56,21 +62,22 @@ const AuthPage = () => {
         localStorage.setItem("role", data.role);
         localStorage.setItem("userName", data.name || "User");
 
-        //  Redirect (React way)
         if (data.role === "admin") {
           navigate("/admin/dashboard");
         } else {
           navigate("/client/dashboard");
         }
       } else {
-        // SIGNUP SUCCESS
         alert("Account created successfully! Please login.");
         setIsLogin(true);
         setName("");
       }
     } catch (err) {
+      const message =
+        err.response?.data?.detail ||
+        "Connection failed. Is the backend running?";
+      alert(message);
       console.error(err);
-      alert("Connection failed. Is the backend running?");
     }
   };
 
@@ -185,5 +192,6 @@ const AuthPage = () => {
     </div>
   );
 };
+
 
 export default AuthPage;

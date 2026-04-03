@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+
 import { 
   Shield, 
   CloudRain, 
@@ -22,10 +23,23 @@ const ClientDashboard = () => {
 
 const handleLogout = () => {
   localStorage.removeItem("token");
+  localStorage.removeItem("role");
+  localStorage.removeItem("userName");
   navigate("/auth");
 };
+
+  const [userName, setUserName] = useState("User");
+
+useEffect(() => {
+  const name = localStorage.getItem("userName");
+  setUserName(name || "User");
+}, []);
   // Mock data for the prototype
-  const user = { name: "Ayan Chowdhury", zone: "Asansol - Sector 2", balance: "₹1,250" };
+  const user = {
+  name: userName,
+  zone: "Asansol - Kalyanpur Sector 2",
+  balance: "₹1,250"
+};
   
   const activities = [
     { id: 1, type: 'Payout', event: 'Heavy Rain (Zone A)', amount: '+ ₹350', date: '2 hours ago', status: 'Success' },

@@ -8,6 +8,7 @@ import Footer from "./Footer";
 import ClientDashboard from "./ClientDashboard";
 import AdminDashboard from "./AdminDashboard";
 import Loading from "./Loading";
+import ProtectedRoute from "./components/ProtectedRoute";
   
 function App() {
   const [loading, setLoading] = useState(true);
@@ -30,8 +31,24 @@ function App() {
               }
             />
             <Route path="/auth" element={<AuthPage />} />
-           <Route path="/client/dashboard" element={<ClientDashboard />} />
-<Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route
+              path="/client/dashboard"
+              element={
+                <ProtectedRoute role="client">
+                  <ClientDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/dashboard"
+              element={
+                <ProtectedRoute role="admin">
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+
             
           </Routes>
         </Router>
