@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
+import { getClientData, getPayoutHistory } from "./apis/dashboard";
 
 import { 
   Shield, 
@@ -20,6 +21,47 @@ import {
 const ClientDashboard = () => {
 
   const navigate = useNavigate();
+  const [user, setUser] = useState({
+  name: "Loading...",
+  balance: "₹0",
+  zone: "Loading..."
+});
+
+const [activities, setActivities] = useState([]);
+
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const userRes = await getClientData();
+      const payoutRes = await getPayoutHistory();
+
+      console.log("USER RES:", userRes.data);
+      console.log("PAYOUT RES:", payoutRes.data);
+
+      setUser({
+        name: userRes.data?.name || "User",
+        balance: `₹${userRes.data?.balance || 0}`,
+        zone: userRes.data?.city || "N/A"
+      });
+
+      const formatted = payoutRes.data?.map((p) => ({
+        id: p.id,
+        type: "Payout",
+        event: `${p.disruption_type} (${p.severity_level})`,
+        amount: `+ ₹${p.amount}`,
+        date: new Date(p.timestamp).toLocaleString(),
+        status: p.status
+      })) || [];
+
+      setActivities(formatted);
+
+    } catch (err) {
+      console.error("Dashboard error:", err);
+    }
+  };
+
+  fetchData();
+}, []);
 
 const handleLogout = () => {
   localStorage.removeItem("token");
@@ -28,24 +70,7 @@ const handleLogout = () => {
   navigate("/auth");
 };
 
-  const [userName, setUserName] = useState("User");
 
-useEffect(() => {
-  const name = localStorage.getItem("userName");
-  setUserName(name || "User");
-}, []);
-  // Mock data for the prototype
-  const user = {
-  name: userName,
-  zone: "Asansol - Kalyanpur Sector 2",
-  balance: "₹1,250"
-};
-  
-  const activities = [
-    { id: 1, type: 'Payout', event: 'Heavy Rain (Zone A)', amount: '+ ₹350', date: '2 hours ago', status: 'Success' },
-    { id: 2, type: 'Premium', event: 'Weekly Protection', amount: '- ₹49', date: 'Yesterday', status: 'Active' },
-    { id: 3, type: 'Payout', event: 'Platform Outage', amount: '+ ₹200', date: '3 days ago', status: 'Success' },
-  ];
 
   return (
     <div className="flex min-h-screen bg-omni-dark text-gray-100 font-sans">

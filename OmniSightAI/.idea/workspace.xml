@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c6aa51ef-cfbd-4744-8e75-817187c32226" name="Changes" comment="" />
+    <list default="true" id="4be79e8d-2160-4160-ae94-90598532a45c" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -27,7 +27,7 @@
             <expand>
               <path>
                 <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
-                <item name="OmniSight AI" type="f1a62948:ProjectNode" />
+                <item name="OmniSIghtAI" type="f1a62948:ProjectNode" />
               </path>
             </expand>
             <select />
@@ -52,9 +52,9 @@
   }
 }]]></component>
   <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 8
+  "associatedIndex": 7
 }]]></component>
-  <component name="ProjectId" id="3BVx57xWaOaCqLFlWZ7rcK6ZoGo" />
+  <component name="ProjectId" id="3BVwn0suo070d8xWZ6Wg1jtDIsY" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -70,13 +70,14 @@
     "cidr.known.project.marker": "true",
     "dart.analysis.tool.window.visible": "false",
     "git-widget-placeholder": "main",
+    "last_opened_file_path": "/home/subham/omnisight-ai/OmniSight-AI/omnisight-android",
     "settings.editor.selected.configurable": "AndroidSdkUpdater",
     "show.migrate.to.gradle.popup": "false"
   }
 }]]></component>
   <component name="RunManager">
     <configuration name="app" type="AndroidRunConfigurationType" factoryName="Android App" activateToolWindowBeforeRun="false">
-      <module name="OmniSight_AI.app" />
+      <module name="OmniSIghtAI.app" />
       <option name="ANDROID_RUN_CONFIGURATION_SCHEMA_VERSION" value="1" />
       <option name="DEPLOY" value="true" />
       <option name="DEPLOY_APK_FROM_BUNDLE" value="false" />
@@ -150,11 +151,11 @@
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="c6aa51ef-cfbd-4744-8e75-817187c32226" name="Changes" comment="" />
-      <created>1774587852832</created>
+      <changelist id="4be79e8d-2160-4160-ae94-90598532a45c" name="Changes" comment="" />
+      <created>1774587709011</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1774587852832</updated>
+      <updated>1774587709011</updated>
     </task>
     <servers />
   </component>

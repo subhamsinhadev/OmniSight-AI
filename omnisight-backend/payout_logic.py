@@ -1,22 +1,84 @@
+from database import SessionLocal
+from models import User
+
+
 def determine_payout_tier(disruption_type: str, value: float):
     """
     Implements Threshold Limits.
-    AQI Example: 300-400 (Moderate/30%), >400 (Severe/100%).
     """
+
     if disruption_type == "AQI":
-        if value >= 400:
+        if value >= 300:
             return {"level": "Severe", "percent": 100}
-        elif value >= 300:
+        elif value >= 200:
             return {"level": "Moderate", "percent": 30}
-            
+
     elif disruption_type == "Rainfall":
-        if value >= 50: # 50mm+ as per slide
+        if value >= 50:  # mm
             return {"level": "Severe", "percent": 100}
         elif value >= 20:
             return {"level": "Moderate", "percent": 30}
-            
-    return None # No threshold crossed
+
+    return None
+
 
 def calculate_payout_amount(avg_daily_income: float, tier_percent: int):
-    # Parametric payouts are fixed amounts agreed upfront
     return (avg_daily_income * tier_percent) / 100
+
+
+def process_payout(disruption_type: str, value: float):
+    db = SessionLocal()
+
+    try:
+        print(f"⚡ Processing {disruption_type} trigger with value {value}")
+
+        tier = determine_payout_tier(disruption_type, value)
+
+        if not tier:
+            print("❌ No payout tier triggered")
+            return
+
+        users = db.query(User).filter(User.role == "client").all()
+        print(f"👥 Found {len(users)} users")
+
+        from models import Payout
+
+        for user in users:
+            print("Processing user:", user.name)
+
+            avg_income = user.avg_daily_income or 500
+
+            payout_amount = calculate_payout_amount(
+                avg_income,
+                tier["percent"]
+            )
+
+            print(f"Before: {user.balance}")
+            user.balance += payout_amount
+            print(f"After: {user.balance}")
+
+            print(
+                f"💰 Paid ₹{payout_amount} to {user.name} "
+                f"({tier['level']} - {tier['percent']}%)"
+            )
+
+            # ✅ CREATE payout record INSIDE loop
+            payout_record = Payout(
+                user_id=user.id,
+                amount=payout_amount,
+                disruption_type=disruption_type,
+                severity_level=tier["level"],
+                payout_percentage=tier["percent"]
+            )
+
+            db.add(payout_record)  # ✅ inside loop
+
+
+        db.commit()
+
+    except Exception as e:
+        print("Payout error:", e)
+        db.rollback()
+
+    finally:
+        db.close()

@@ -6,6 +6,12 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import os
 from dotenv import load_dotenv
 import hashlib
+from database import SessionLocal
+from database import get_db
+from models import User
+from fastapi import Depends, HTTPException
+from sqlalchemy.orm import Session
+
 
 load_dotenv()
 
@@ -34,18 +40,32 @@ def create_token(data: dict):
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 #  GET CURRENT USER
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+):
     token = credentials.credentials
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload
+        user_id = payload.get("user_id")
     except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    return user
+
 
 #  ROLE BASED ACCESS
 def require_role(role: str):
     def checker(user=Depends(get_current_user)):
-        if user.get("role") != role:
+        if user.role != role:
             raise HTTPException(status_code=403, detail="Forbidden: Access restricted")
         return user
     return checker

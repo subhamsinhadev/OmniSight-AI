@@ -1,35 +1,45 @@
-from sqlalchemy.orm import Session
-from models import User, Payout
-from payout_logic import determine_payout_tier, calculate_payout_amount
+import time
+import requests
+import os
+import random
+from payout_logic import process_payout
 
-def process_automated_triggers(db: Session, city: str, disruption_type: str, sensor_value: float):
-    """
-    1. Trigger fires from API
-    2. Policy checked for active workers in zone
-    3. Payout released automatically
-    """
-    tier = determine_payout_tier(disruption_type, sensor_value)
-    if not tier:
-        return "No threshold hit."
+AQI_THRESHOLD = 250
 
-    # Find all active workers in the affected city
-    # In production, check 'is_active_policy'
-    eligible_workers = db.query(User).filter(User.city == city).all()
-    
-    payouts_processed = 0
-    for worker in eligible_workers:
-        # Calculate fixed payout based on tier
-        payout_val = calculate_payout_amount(worker.avg_daily_income, tier["percent"])
-        
-        new_payout = Payout(
-            user_id=worker.id,
-            amount=payout_val,
-            disruption_type=disruption_type,
-            severity_level=tier["level"],
-            payout_percentage=tier["percent"]
-        )
-        db.add(new_payout)
-        payouts_processed += 1
-        
-    db.commit()
-    return f"Success: {payouts_processed} payouts released at {tier['percent']}% level."
+
+def fetch_aqi(city="Asansol"):
+    API_KEY = os.getenv("AQI_API_KEY")
+
+    try:
+        if API_KEY:
+            url = f"https://api.waqi.info/feed/{city}/?token={API_KEY}"
+            response = requests.get(url)
+            data = response.json()
+
+            if data["status"] == "ok":
+                return data["data"]["aqi"]
+
+        print(" Using mock AQI data")
+        return random.randint(100, 400)
+
+    except Exception as e:
+        print("Error fetching AQI:", e)
+        return random.randint(100, 400)
+
+
+def start_oracle():
+    print(" Oracle started...")
+
+    while True:
+        aqi = fetch_aqi()
+
+        if aqi is not None:
+            print(f" Current AQI: {aqi}")
+
+            if aqi > AQI_THRESHOLD:
+                print(" AQI Threshold breached!")
+                process_payout("AQI",aqi)
+
+        # time.sleep(300) # 5 min timer 
+        time.sleep(30)  # for faster demo
+

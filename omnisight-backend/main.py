@@ -2,17 +2,30 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
-import models, schemas, auth
-from database import SessionLocal, engine
+from models import User , Payout
+from auth import get_current_user
+import  models,schemas, auth
+from database import SessionLocal , get_db
 from pricing import calculate_weekly_premium
+from automation import start_oracle
+import threading
+from models import Base
+from database import engine
 
 app = FastAPI(title="OmniSight AI API")
 
 # --- STARTUP EVENT ---
 @app.on_event("startup")
+def start_background_tasks():
+    thread = threading.Thread(target=start_oracle)
+    thread.daemon = True
+    thread.start()
+
+@app.on_event("startup")
+   
 def startup():
     try:
-        models.Base.metadata.create_all(bind=engine)
+        Base.metadata.create_all(bind=engine)
         print("✅ DB connected & tables created")
     except Exception as e:
         print("❌ DB ERROR:", e)
@@ -23,13 +36,16 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "https://omni-sight-ai.vercel.app",
-        "https://omni-sight-ai-seven.vercel.app"
+        "https://omni-sight-ai-seven.vercel.app",
+        "http://127.0.0.1:5173"
+
 
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # --- GLOBAL ERROR HANDLER ---
 @app.exception_handler(Exception)
@@ -154,3 +170,34 @@ def get_insurance_quote(city: str, tier: str, income: float):
         "coverage_limit": income * 7,
         "billing_cycle": "Weekly"
     }
+
+
+@app.get("/client/dashboard")
+def client_dashboard(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return {
+        "name": current_user.name,
+        "balance": current_user.balance,
+        "city": current_user.city
+    }
+
+# @app.get("/client/payouts")
+# def get_payouts(
+#     current_user: User = Depends(get_current_user),
+#     db: Session = Depends(get_db)
+# ):
+#     payouts = (
+#         db.query(Payout)
+#         .filter(Payout.user_id == current_user.id)
+#         .order_by(Payout.timestamp.desc())
+#         .all()
+#     )
+
+#     return payouts
+
+@app.get("/client/payouts")
+def get_payouts(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    payouts = db.query(Payout).filter(Payout.user_id == current_user.id).all()
+    return payouts
