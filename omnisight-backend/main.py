@@ -170,34 +170,3 @@ def get_insurance_quote(city: str, tier: str, income: float):
         "coverage_limit": income * 7,
         "billing_cycle": "Weekly"
     }
-
-
-@app.get("/client/dashboard")
-def client_dashboard(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    return {
-        "name": current_user.name,
-        "balance": current_user.balance,
-        "city": current_user.city
-    }
-
-# @app.get("/client/payouts")
-# def get_payouts(
-#     current_user: User = Depends(get_current_user),
-#     db: Session = Depends(get_db)
-# ):
-#     payouts = (
-#         db.query(Payout)
-#         .filter(Payout.user_id == current_user.id)
-#         .order_by(Payout.timestamp.desc())
-#         .all()
-#     )
-
-#     return payouts
-
-@app.get("/client/payouts")
-def get_payouts(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    payouts = db.query(Payout).filter(Payout.user_id == current_user.id).all()
-    return payouts
