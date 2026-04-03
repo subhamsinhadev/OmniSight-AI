@@ -41,5 +41,5 @@ def start_oracle():
                 process_payout("AQI",aqi)
 
         # time.sleep(300) # 5 min timer 
-        time.sleep(30)  # for faster demo
+        time.sleep(300)  # for faster demo
 

@@ -124,6 +124,15 @@ def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
 
 # --- DASHBOARD ENDPOINTS ---
 
+
+@app.get("/client/dashboard")
+def client_dashboard(current_user: User = Depends(get_current_user)):
+    return {
+        "name": current_user.name,
+        "balance": current_user.balance,
+        "city": current_user.city
+    }
+
 @app.get("/client/dashboard-stats")
 def get_client_stats(
     current_user=Depends(auth.require_role("client")),
@@ -138,6 +147,14 @@ def get_client_stats(
             {"id": 2, "event": "Platform Outage", "amount": "+ ₹200", "date": "1d ago"}
         ]
     }
+
+@app.get("/client/payouts")
+def get_payout_history(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    payouts = db.query(Payout).filter(Payout.user_id == current_user.id).all()
+    return payouts
 
 @app.get("/admin/system-status")
 def get_admin_stats(
