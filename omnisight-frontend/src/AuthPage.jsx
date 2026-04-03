@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 import { Shield, Mail, Lock, User, ChevronRight } from 'lucide-react';
 
@@ -8,9 +9,10 @@ const AuthPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // 🔥 DYNAMIC API URL: Uses environment variable or falls back to local
+  //  DYNAMIC API URL: Uses environment variable or falls back to local
   const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
+  const navigate = useNavigate();
   const handleSubmit = async (e) => {
     e.preventDefault();
     const url = isLogin ? "/login" : "/signup";
@@ -39,13 +41,27 @@ const AuthPage = () => {
       }
 
       if (isLogin) {
-        // SUCCESS: Save to storage
+        //  Clear old session (important)
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        localStorage.removeItem("userName");
+
+        //  Save new session
+        if (!data.access_token) {
+          alert("Login failed: No token received");
+          return;
+        }
+
         localStorage.setItem("token", data.access_token);
         localStorage.setItem("role", data.role);
         localStorage.setItem("userName", data.name || "User");
 
-        // Redirect based on the role returned by the server
-        window.location.href = data.role === "admin" ? "/admin/dashboard" : "/client/dashboard";
+        //  Redirect (React way)
+        if (data.role === "admin") {
+          navigate("/admin/dashboard");
+        } else {
+          navigate("/client/dashboard");
+        }
       } else {
         // SIGNUP SUCCESS
         alert("Account created successfully! Please login.");

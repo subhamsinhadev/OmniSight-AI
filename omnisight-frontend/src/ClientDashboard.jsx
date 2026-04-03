@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import React from 'react';
 import { 
   Shield, 
@@ -13,7 +14,16 @@ import {
   History
 } from 'lucide-react';
 
+
+
 const ClientDashboard = () => {
+
+  const navigate = useNavigate();
+
+const handleLogout = () => {
+  localStorage.removeItem("token");
+  navigate("/auth");
+};
   // Mock data for the prototype
   const user = { name: "Ayan Chowdhury", zone: "Asansol - Sector 2", balance: "₹1,250" };
   
@@ -47,7 +57,9 @@ const ClientDashboard = () => {
           </button>
         </nav>
 
-        <button className="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-red-400 transition-colors mt-auto">
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-red-400 transition-colors mt-auto">
           <LogOut size={20} /> Sign Out
         </button>
       </aside>
@@ -62,14 +74,29 @@ const ClientDashboard = () => {
             <p className="text-gray-400 text-sm">Your income is protected in <span className="text-omni-emerald font-semibold">{user.zone}</span></p>
           </div>
           <div className="flex items-center gap-4">
-            <div className="text-right hidden sm:block">
-              <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Wallet Balance</p>
-              <p className="text-xl font-bold text-omni-emerald">{user.balance}</p>
+  
+              {/* Mobile Logout Button */}
+              <button 
+                onClick={handleLogout}
+                className="lg:hidden p-2 rounded-lg bg-red-500/10 text-red-400"
+              >
+                <LogOut size={18} />
+              </button>
+
+              <div className="text-right hidden sm:block">
+                <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">
+                  Wallet Balance
+                </p>
+                <p className="text-xl font-bold text-omni-emerald">{user.balance}</p>
+              </div>
+
+              <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-omni-emerald to-emerald-800 flex items-center justify-center font-bold">
+                AC
+              </div>
             </div>
-            <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-omni-emerald to-emerald-800 flex items-center justify-center font-bold">
-              AC
-            </div>
-          </div>
+
+
+          
         </header>
 
         {/* --- TOP ROW: STATUS CARDS --- */}
