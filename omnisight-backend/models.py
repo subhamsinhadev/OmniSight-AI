@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Numeric
 from database import Base
 from datetime import datetime
 
@@ -12,7 +12,7 @@ class User(Base):
     password = Column(String(255))
     role = Column(String(50))
 
-    balance = Column(Float, default=0.0)  
+    balance = Column(Numeric(10, 2), nullable=False, default=0)  
 
     city = Column(String(100), default="Asansol")
     avg_daily_income = Column(Float, default=500.0)
