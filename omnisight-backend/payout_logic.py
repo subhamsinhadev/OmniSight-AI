@@ -1,5 +1,7 @@
 from database import SessionLocal
 from models import User
+from decimal import Decimal
+from models import Payout
 
 
 def determine_payout_tier(disruption_type: str, value: float):
@@ -41,7 +43,7 @@ def process_payout(disruption_type: str, value: float):
         users = db.query(User).filter(User.role == "client").all()
         print(f"👥 Found {len(users)} users")
 
-        from models import Payout
+        
 
         for user in users:
             print("Processing user:", user.name)

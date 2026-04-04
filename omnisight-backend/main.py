@@ -20,6 +20,7 @@ import time
 import threading
 
 from payout_logic import process_payout
+from decimal import Decimal
 import time, uuid, random
 from fastapi import HTTPException
 app = FastAPI(title="OmniSight AI API")
@@ -285,7 +286,7 @@ def fetch_aqi(city: str = "Asansol"):
 
 def delayed_aqi_process(city: str = "Asansol"):
     try:
-        time.sleep(150)
+        time.sleep(15)
 
         aqi = fetch_aqi(city)
         breached = aqi > AQI_THRESHOLD
