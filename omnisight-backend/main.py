@@ -7,6 +7,7 @@ from auth import get_current_user
 import  models,schemas, auth
 from database import SessionLocal , get_db
 from pricing import calculate_weekly_premium
+from datetime import datetime, date
 from automation import start_oracle
 import threading
 from models import Base
@@ -122,11 +123,17 @@ def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
     })
 
     return {
-        "access_token": token,
-        "token_type": "bearer",
-        "role": db_user.role,
-        "name": db_user.name
+    "access_token": token,
+    "token_type": "bearer",
+    "id": db_user.id,
+    "name": db_user.name,
+    "email": db_user.email,
+    "role": db_user.role if db_user.role else "client",
+    "city": db_user.city,
+    "avg_daily_income": db_user.avg_daily_income,
+    "activity_tier": db_user.activity_tier
     }
+
 
 # --- DASHBOARD ENDPOINTS ---
 
@@ -195,7 +202,6 @@ def get_insurance_quote(city: str, tier: str, income: float):
     }
 
 
-
 @app.post("/simulate-payout")
 def simulate_payout(
     data: schemas.PayoutRequest,
@@ -221,3 +227,23 @@ def simulate_payout(
     except Exception as e:
         print("PAYOUT ERROR:", e)
         raise HTTPException(status_code=500, detail="Payout failed")
+
+@app.get("/client/payout-history")
+def get_payout_history(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    payouts = db.query(Payout).filter(Payout.user_id == current_user.id).all()
+
+    return [
+        {
+            "id": p.id,
+            "amount": p.amount,
+            "disruption_type": p.disruption_type,
+            "severity_level": p.severity_level,
+            "payout_percentage": p.payout_percentage,
+            "timestamp": p.timestamp,
+            "status": p.status
+        }
+        for p in payouts
+    ]

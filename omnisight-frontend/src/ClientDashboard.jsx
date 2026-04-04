@@ -91,7 +91,7 @@ const handleLogout = () => {
           <button className="w-full flex items-center gap-3 px-4 py-3 bg-omni-emerald/10 text-omni-emerald rounded-xl font-medium">
             <LayoutDashboard size={20} /> Dashboard
           </button>
-          <button className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-white/5 rounded-xl transition-all">
+          <button onClick={()=>navigate("/client/payout-history")} className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-white/5 rounded-xl transition-all">
             <History size={20} /> Payout History
           </button>
           <button className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-white/5 rounded-xl transition-all">

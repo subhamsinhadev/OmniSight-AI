@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
-import { 
-  Shield, 
-  Activity, 
-  Users, 
-  AlertOctagon, 
-  Zap, 
-  Map as MapIcon, 
+import {
+  Shield,
+  Activity,
+  Users,
+  AlertOctagon,
+  Zap,
+  Map as MapIcon,
   Search,
   CheckCircle,
   XCircle,
   Filter
 } from 'lucide-react';
-
 const AdminDashboard = () => {
+  const [isSystemPaused, setIsSystemPaused] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
 
   // Mock stats for the dashboard
@@ -33,10 +33,30 @@ const AdminDashboard = () => {
     setIsSimulating(true);
     setTimeout(() => setIsSimulating(false), 3000);
   };
+  const toggleSystem = async () => {
+    try {
+      const token = localStorage.getItem("token");
 
+      const res = await fetch("http://127.0.0.1:8000/admin/toggle-system", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ pause: !isSystemPaused })
+      });
+
+      const data = await res.json();
+      setIsSystemPaused(data.paused);
+
+    } catch (err) {
+      console.error(err);
+      alert("Failed to toggle system");
+    }
+  };
   return (
     <div className="min-h-screen bg-[#0a0f1a] text-gray-100 font-sans flex">
-      
+
       {/* --- ADMIN SIDEBAR --- */}
       <aside className="w-20 lg:w-64 bg-black/40 border-r border-white/5 flex flex-col items-center lg:items-start p-6">
         <div className="flex items-center gap-2 mb-12">
@@ -45,18 +65,18 @@ const AdminDashboard = () => {
           </div>
           <span className="hidden lg:block text-xl font-black tracking-tighter">OMNISIGHT <span className="text-red-500">OPS</span></span>
         </div>
-        
+
         <nav className="space-y-6 w-full">
-          <button className="flex items-center gap-4 text-red-500 w-full px-4 py-2 bg-red-500/10 rounded-xl"><Activity size={20}/> <span className="hidden lg:block">Monitoring</span></button>
-          <button className="flex items-center gap-4 text-gray-500 hover:text-white w-full px-4 py-2"><MapIcon size={20}/> <span className="hidden lg:block">Zone Control</span></button>
-          <button className="flex items-center gap-4 text-gray-500 hover:text-white w-full px-4 py-2"><Users size={20}/> <span className="hidden lg:block">Partners</span></button>
-          <button className="flex items-center gap-4 text-gray-500 hover:text-white w-full px-4 py-2"><AlertOctagon size={20}/> <span className="hidden lg:block">Fraud AI</span></button>
+          <button className="flex items-center gap-4 text-red-500 w-full px-4 py-2 bg-red-500/10 rounded-xl"><Activity size={20} /> <span className="hidden lg:block">Monitoring</span></button>
+          <button className="flex items-center gap-4 text-gray-500 hover:text-white w-full px-4 py-2"><MapIcon size={20} /> <span className="hidden lg:block">Zone Control</span></button>
+          <button className="flex items-center gap-4 text-gray-500 hover:text-white w-full px-4 py-2"><Users size={20} /> <span className="hidden lg:block">Partners</span></button>
+          <button className="flex items-center gap-4 text-gray-500 hover:text-white w-full px-4 py-2"><AlertOctagon size={20} /> <span className="hidden lg:block">Fraud AI</span></button>
         </nav>
       </aside>
 
       {/* --- MAIN CONTENT --- */}
       <main className="flex-1 p-8 overflow-y-auto">
-        
+
         {/* Header */}
         <div className="flex justify-between items-center mb-10">
           <h1 className="text-3xl font-bold italic tracking-tight">SYSTEM OVERVIEW</h1>
@@ -65,7 +85,7 @@ const AdminDashboard = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
               <input type="text" placeholder="Search Zone ID..." className="bg-white/5 border border-white/10 rounded-full py-2 pl-10 pr-4 outline-none focus:border-red-500/50" />
             </div>
-            <button 
+            <button
               onClick={handleSimulate}
               className={`flex items-center gap-2 px-6 py-2 rounded-full font-bold transition-all ${isSimulating ? 'bg-orange-500 animate-pulse' : 'bg-red-600 hover:bg-red-500 shadow-lg shadow-red-900/20'}`}
             >
@@ -73,7 +93,72 @@ const AdminDashboard = () => {
             </button>
           </div>
         </div>
+        {/* --- ADMIN CONTROL PANEL --- */}
+        <div className="mb-10 grid grid-cols-1 lg:grid-cols-2 gap-6">
 
+          {/* Kill Switch */}
+          <div className="bg-black/40 border border-red-500/20 rounded-3xl p-6 relative overflow-hidden">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold text-red-400">Emergency Control</h2>
+              <AlertOctagon className="text-red-500" />
+            </div>
+
+            <p className="text-sm text-gray-400 mb-6">
+              Instantly halt all new policy enrollments and renewals during high-risk scenarios.
+            </p>
+
+            <button
+              onClick={toggleSystem}
+              className={`w-full py-4 rounded-2xl font-black text-lg tracking-wider transition-all ${isSystemPaused
+                  ? "bg-gray-700 text-gray-300"
+                  : "bg-red-600 hover:bg-red-500 text-white shadow-[0_0_20px_rgba(239,68,68,0.4)]"
+                }`}
+            >
+              {isSystemPaused ? "SYSTEM PAUSED" : "🚨 KILL SWITCH"}
+            </button>
+
+            <p className="text-xs text-gray-500 mt-3">
+              Status: {isSystemPaused ? "❌ Enrollment Disabled" : "✅ System Active"}
+            </p>
+          </div>
+
+          {/* Actuarial Panel */}
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
+            <h2 className="text-lg font-bold mb-4">Actuarial Risk Monitor</h2>
+
+            <div className="space-y-4">
+
+              <div>
+                <p className="text-xs text-gray-500">Loss Ratio</p>
+                <p className="text-xl font-bold text-orange-400">78%</p>
+              </div>
+
+              <div>
+                <p className="text-xs text-gray-500">Active Risk Zones</p>
+                <p className="text-xl font-bold text-red-400">5 Zones</p>
+              </div>
+
+              <div>
+                <p className="text-xs text-gray-500">Premium vs Payout</p>
+                <p className="text-xl font-bold text-omni-emerald">₹1.2L / ₹95K</p>
+              </div>
+
+              <div className="pt-3">
+                <div className="w-full bg-white/10 rounded-full h-2">
+                  <div
+                    className="bg-red-500 h-2 rounded-full"
+                    style={{ width: "78%" }}
+                  />
+                </div>
+                <p className="text-[10px] text-gray-500 mt-1">
+                  Risk threshold nearing critical level
+                </p>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
           {stats.map((stat, i) => (
@@ -86,7 +171,7 @@ const AdminDashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
+
           {/* Active Disruption List */}
           <div className="lg:col-span-2 bg-white/5 border border-white/10 rounded-3xl p-8">
             <div className="flex justify-between items-center mb-6">
@@ -96,7 +181,7 @@ const AdminDashboard = () => {
               </h2>
               <Filter className="text-gray-500 hover:text-white cursor-pointer" size={20} />
             </div>
-            
+
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>

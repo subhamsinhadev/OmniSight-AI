@@ -20,7 +20,7 @@ class User(Base):
 
 class Payout(Base):
     __tablename__ = "payouts"
-
+ 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     amount = Column(Float)

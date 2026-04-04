@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Menu, X, ChevronDown } from "lucide-react";
 import logo from "./assets/logo.png";
 import { TypeAnimation } from "react-type-animation";
-
+import Particles from './Particles';
 const HeroSection = () => {
 
   const [mobileMenu, setMobileMenu] = useState(false);
@@ -24,14 +24,27 @@ const HeroSection = () => {
 
   return (
     <section className="bg-omni-dark text-gray-100 min-h-screen flex flex-col font-sans overflow-hidden relative pt-14 md:pt-16">
-
+  {/* PARTICLES BACKGROUND */}
+  <div className="absolute inset-0 z-0 pointer-events-none">
+  <Particles
+    particleColors={["#ffffff"]}
+    particleCount={200}
+    particleSpread={10}
+    speed={0.1}
+    particleBaseSize={100}
+    moveParticlesOnHover
+    alphaParticles={false}
+    disableRotation={false}
+    pixelRatio={1}
+/>
+</div>
       {/* NAVBAR */}
       <nav
         className={`fixed top-0 left-0 w-full z-50 backdrop-blur-xl transition-all duration-300
         ${scrolled
-          ? "bg-white/5 border-b border-emerald-400/20 shadow-lg shadow-emerald-500/10"
-          : "bg-transparent"
-        }`}
+            ? "bg-white/5 border-b border-emerald-400/20 shadow-lg shadow-emerald-500/10"
+            : "bg-transparent"
+          }`}
       >
 
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-emerald-500/10 via-green-400/10 to-emerald-600/10 blur-2xl"></div>
@@ -81,10 +94,12 @@ const HeroSection = () => {
               </div>
             </div>
 
-            <a href="#" className="hover:text-omni-emerald transition">
+            <Link
+              to="/pricing"
+              className="hover:text-omni-emerald transition"
+            >
               Pricing
-            </a>
-
+            </Link>
           </div>
 
           {/* Buttons */}
@@ -159,7 +174,7 @@ const HeroSection = () => {
 
       </nav>
 
-    
+
 
       {/* --- HERO CONTENT --- */}
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 pointer-events-none" />
@@ -174,7 +189,7 @@ const HeroSection = () => {
           </span>
           <span className="text-xs font-bold tracking-widest uppercase text-gray-300">Hackathon Prototype v1.0</span>
         </div>
-        
+
 
         <div className="relative inline-block">
 
@@ -183,24 +198,24 @@ const HeroSection = () => {
 
           <h1 className="relative text-3xl md:text-5xl font-extrabold mb-8 leading-[1.1] tracking-tight">
 
-        <TypeAnimation
-          sequence={[
-            "OmniSight AI",
-            2000,
-            "Income Protection, Automated by AI.",
-            2000,
-            "Detecting Risks Before They Happen.",
-            2000,
-            "Instant Protection for Gig Workers.",
-            2000,
-          ]}
-          wrapper="span"
-          speed={40}
-          repeat={Infinity}
-          className="bg-gradient-to-r from-green-300 via-emerald-400 to-green-600 bg-clip-text text-transparent"
-        />
+            <TypeAnimation
+              sequence={[
+                "OmniSight AI",
+                2000,
+                "Income Protection, Automated by AI.",
+                2000,
+                "Detecting Risks Before They Happen.",
+                2000,
+                "Instant Protection for Gig Workers.",
+                2000,
+              ]}
+              wrapper="span"
+              speed={40}
+              repeat={Infinity}
+              className="bg-gradient-to-r from-green-300 via-emerald-400 to-green-600 bg-clip-text text-transparent"
+            />
 
-      </h1>
+          </h1>
 
         </div>
         <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-12 leading-relaxed">

@@ -81,14 +81,26 @@ const handleLogout = () => {
           return;
         }
 
+        // localStorage.setItem("token", data.access_token);
+        // localStorage.setItem("role", data.role);
+        // localStorage.setItem("userName", data.name || "User");
         localStorage.setItem("token", data.access_token);
         localStorage.setItem("role", data.role);
-        localStorage.setItem("userName", data.name || "User");
+        localStorage.setItem("user", JSON.stringify({
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          role: data.role,
+          city: data.city,
+          avg_daily_income: data.avg_daily_income,
+          activity_tier: data.activity_tier
+        }));
 
         if (data.role === "admin") {
           navigate("/admin/dashboard");
         } else {
-          navigate("/client/dashboard");
+          // navigate("/client/dashboard");
+          navigate("/client/plan-dashboard");
         }
       } else {
         alert("Account created successfully! Please login.");
@@ -129,18 +141,16 @@ const handleLogout = () => {
               <button
                 type="button"
                 onClick={() => setRole('client')}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                  role === 'client' ? 'bg-emerald-500 text-black shadow-lg' : 'text-gray-500 hover:text-gray-300'
-                }`}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${role === 'client' ? 'bg-emerald-500 text-black shadow-lg' : 'text-gray-500 hover:text-gray-300'
+                  }`}
               >
                 Delivery Partner
               </button>
               <button
                 type="button"
                 onClick={() => setRole('admin')}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                  role === 'admin' ? 'bg-emerald-500 text-black shadow-lg' : 'text-gray-500 hover:text-gray-300'
-                }`}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${role === 'admin' ? 'bg-emerald-500 text-black shadow-lg' : 'text-gray-500 hover:text-gray-300'
+                  }`}
               >
                 Admin
               </button>
