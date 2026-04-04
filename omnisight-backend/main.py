@@ -12,11 +12,18 @@ from automation import start_oracle
 import threading
 from models import Base
 from database import engine
+import os
+import requests
+import random
+import logging
+import time
 
+from payout_logic import process_payout
 import time, uuid, random
 from fastapi import HTTPException
 app = FastAPI(title="OmniSight AI API")
-
+AQI_THRESHOLD = 250
+logging.basicConfig(level=logging.INFO)
 # --- STARTUP EVENT ---
 @app.on_event("startup")
 def start_background_tasks():
@@ -247,3 +254,51 @@ def get_payout_history(
         }
         for p in payouts
     ]
+# AQI 
+def fetch_aqi(city: str = "Asansol"):
+    API_KEY = os.getenv("AQI_API_KEY")
+
+    try:
+        if API_KEY:
+            url = f"https://api.waqi.info/feed/{city}/?token={API_KEY}"
+            response = requests.get(url, timeout=5)
+            data = response.json()
+
+            if data.get("status") == "ok":
+                return data["data"]["aqi"]
+
+        logging.info("Using mock AQI data")
+        return random.randint(100, 400)
+
+    except Exception as e:
+        logging.error(f"Error fetching AQI: {e}")
+        return random.randint(100, 400)
+    
+
+@app.get("/aqi")
+def run_oracle():
+
+    time.sleep(150)  # change to 300 in production
+
+    aqi = fetch_aqi()
+    breached = aqi > AQI_THRESHOLD
+
+    payout_info = None
+
+    if breached:
+        logging.warning("Threshold breached")
+        payout_result = process_payout("AQI", aqi)
+
+        payout_info = {
+            "type": "AQI",
+            "value": aqi,
+            "status": payout_result
+        }
+
+    return {
+        "success": True,
+        "aqi": aqi,
+        "threshold": AQI_THRESHOLD,
+        "breached": breached,
+        "payout": payout_info
+    }
