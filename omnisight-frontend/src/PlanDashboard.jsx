@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const PlanDashboard = () => {
   const [user, setUser] = useState(null);
   const [premiumPlan, setPremiumPlan] = useState(null);
@@ -21,7 +21,7 @@ const PlanDashboard = () => {
     const fetchPremium = async () => {
       try {
         const res = await fetch(
-          `http://127.0.0.1:8000/get-quote?city=${storedUser.city}&tier=${storedUser.activity_tier}&income=${storedUser.avg_daily_income}`
+          `${API_BASE_URL}/get-quote?city=${storedUser.city}&tier=${storedUser.activity_tier}&income=${storedUser.avg_daily_income}`
         );
 
         const data = await res.json();
