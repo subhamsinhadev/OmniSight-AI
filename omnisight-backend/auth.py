@@ -20,7 +20,7 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 #  HASH PASSWORD (FIXED - NO 72 BYTE LIMIT)
 def hash_password(password: str):
@@ -46,11 +46,18 @@ def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
 ):
+    if credentials is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
     token = credentials.credentials
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("id")
+
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 

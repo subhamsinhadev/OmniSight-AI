@@ -12,7 +12,7 @@ class User(Base):
     password = Column(String(255))
     role = Column(String(50))
 
-    balance = Column(Float, default=0.0)  # 🔥 better as float
+    balance = Column(Float, default=0.0)  
 
     city = Column(String(100), default="Asansol")
     avg_daily_income = Column(Float, default=500.0)
