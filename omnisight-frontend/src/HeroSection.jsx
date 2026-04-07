@@ -4,6 +4,41 @@ import { ArrowRight, Menu, X, ChevronDown } from "lucide-react";
 import logo from "./assets/logo.png";
 import { TypeAnimation } from "react-type-animation";
 import Particles from './Particles';
+import { motion } from "framer-motion";
+import { Play } from "lucide-react";
+
+
+
+
+function DemoButton() {
+          return (
+            <motion.a
+              href="https://youtu.be/GmHKtuP-9eM"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="inline-block"
+            >
+              <div className="
+                group flex items-center justify-center gap-3
+                px-10 py-5 rounded-full
+                bg-gradient-to-r from-emerald-400/20 to-cyan-400/20
+                border border-white/10
+                backdrop-blur-xl
+                text-white font-semibold text-lg
+                shadow-lg shadow-emerald-500/10
+                hover:shadow-emerald-500/30
+                hover:from-emerald-400/30 hover:to-cyan-400/30
+                transition-all duration-300
+              ">
+                <Play className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
+                <span className="tracking-wide">Watch Demo</span>
+              </div>
+            </motion.a>
+          );
+        }
+
 const HeroSection = () => {
 
   const [mobileMenu, setMobileMenu] = useState(false);
@@ -77,11 +112,11 @@ const HeroSection = () => {
 
                 <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-xl p-5 w-60 shadow-2xl shadow-emerald-500/10">
 
-                  <a href="#" className="block py-2 px-3 rounded-lg hover:bg-white/10 hover:text-omni-emerald transition">
+                  <a href="/auth" className="block py-2 px-3 rounded-lg hover:bg-white/10 hover:text-omni-emerald transition">
                     Delivery Protection
                   </a>
 
-                  <a href="#" className="block py-2 px-3 rounded-lg hover:bg-white/10 hover:text-omni-emerald transition">
+                  <a href="/pricing" className="block py-2 px-3 rounded-lg hover:bg-white/10 hover:text-omni-emerald transition">
                     Risk Models
                   </a>
 
@@ -148,8 +183,8 @@ const HeroSection = () => {
               {solutionsOpen && (
                 <div className="pl-4 flex flex-col gap-2 text-sm text-gray-400">
 
-                  <a href="#">Delivery Protection</a>
-                  <a href="#">Risk Models</a>
+                  <a href="/auth">Delivery Protection</a>
+                  <a href="/pricing">Risk Models</a>
                   <a href="#">Smart Triggers</a>
 
                 </div>
@@ -229,9 +264,10 @@ const HeroSection = () => {
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
 
-          <button className="bg-white/5 border border-white/10 text-white font-bold px-10 py-5 rounded-full text-lg hover:bg-white/10 transition-all backdrop-blur-sm">
-            Watch Demo
-          </button>
+         
+   
+        <DemoButton />
+        
         </div>
       </div>
       {/* Background Decorative Blur */}

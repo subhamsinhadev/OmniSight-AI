@@ -61,7 +61,7 @@ const Pricing = () => {
           transition-all duration-300">
 
                                 <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5 w-60">
-                                    <a href="#" className="block py-2 px-3 hover:bg-white/10 rounded-lg">Delivery Protection</a>
+                                    <a href="/auth" className="block py-2 px-3 hover:bg-white/10 rounded-lg">Delivery Protection</a>
                                     <a href="#" className="block py-2 px-3 hover:bg-white/10 rounded-lg">Risk Models</a>
                                     <a href="#" className="block py-2 px-3 hover:bg-white/10 rounded-lg">Smart Triggers</a>
                                 </div>
