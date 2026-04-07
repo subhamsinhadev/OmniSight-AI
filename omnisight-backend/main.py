@@ -23,6 +23,7 @@ from payout_logic import process_payout
 from decimal import Decimal
 import time, uuid, random
 from fastapi import HTTPException
+from sqlalchemy import desc
 app = FastAPI(title="OmniSight AI API")
 
 aqi_result_store = {
@@ -164,16 +165,27 @@ def client_dashboard(current_user: User = Depends(get_current_user)):
 
 @app.get("/client/dashboard-stats")
 def get_client_stats(
-    current_user=Depends(auth.require_role("client")),
+    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    # Fetch only the last 4 payouts to keep the Logout button visible on PC
+    recent_payouts = db.query(models.Payout)\
+        .filter(models.Payout.user_id == current_user.id)\
+        .order_by(desc(models.Payout.timestamp))\
+        .limit(4)\
+        .all()
+
     return {
-        "balance": "₹1,250",
-        "status": "Shield Active",
-        "zone": "Asansol - Sector 2",
+        "balance": f"₹{current_user.balance}",
+        "status": "Shield Active" if current_user.activity_tier != "inactive" else "Pending",
+        "zone": f"{current_user.city} - Active",
         "recent_payouts": [
-            {"id": 1, "event": "Heavy Rain", "amount": "+ ₹350", "date": "2h ago"},
-            {"id": 2, "event": "Platform Outage", "amount": "+ ₹200", "date": "1d ago"}
+            {
+                "id": p.id, 
+                "event": p.disruption_type, 
+                "amount": f"+ ₹{p.amount}", 
+                "date": p.timestamp.strftime("%Y-%m-%d %H:%M")
+            } for p in recent_payouts
         ]
     }
 
@@ -330,4 +342,55 @@ def run_oracle(city: str = "Asansol"):
         "success": True,
         "message": "AQI check scheduled",
         "data": aqi_result_store
+    }
+
+# --- Full History for "View All" Page ---
+@app.get("/client/all-payouts")
+def get_all_payouts(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    # This endpoint provides the full data for the dedicated history page
+    all_payouts = db.query(models.Payout)\
+        .filter(models.Payout.user_id == current_user.id)\
+        .order_by(desc(models.Payout.timestamp))\
+        .all()
+    return all_payouts
+
+# --- Balance Withdrawal Logic (Updates DB Balance) ---
+@app.post("/client/withdraw")
+def withdraw_balance(
+    amount: float, 
+    db: Session = Depends(get_db), 
+    current_user: models.User = Depends(get_current_user)
+):
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail="Amount must be greater than zero")
+    
+    # Check if user has enough balance
+    # current_user.balance is Numeric, so we convert to float for comparison
+    if float(current_user.balance) < amount:
+        raise HTTPException(status_code=400, detail="Insufficient funds in your account")
+
+    # Update User Balance in MySQL
+    current_user.balance = float(current_user.balance) - amount
+    
+    # Log the withdrawal so it appears in recent activity
+    withdrawal_entry = models.Payout(
+        user_id=current_user.id,
+        amount=-amount,  # Negative shows money leaving the system
+        disruption_type="Withdrawal",
+        severity_level="N/A",
+        payout_percentage=0,
+        status="Completed",
+        timestamp=datetime.now()
+    )
+    
+    db.add(withdrawal_entry)
+    db.commit()
+    
+    return {
+        "status": "success", 
+        "message": f"Successfully withdrawn ₹{amount}", 
+        "new_balance": current_user.balance
     }
