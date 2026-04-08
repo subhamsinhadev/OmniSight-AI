@@ -26,6 +26,8 @@ const ClientDashboard = () => {
     zone: "Loading..."
   });
 
+  
+
   const [open, setOpen] = useState(false);
   const [activities, setActivities] = useState([]);
 
@@ -63,7 +65,7 @@ const ClientDashboard = () => {
 
   const handleLogout = () => {
     localStorage.clear();
-    navigate("/auth");
+    navigate("/");
   };
 
   return (

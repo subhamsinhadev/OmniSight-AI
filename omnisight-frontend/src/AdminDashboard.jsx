@@ -11,6 +11,10 @@ import {
   XCircle,
   Filter
 } from 'lucide-react';
+import { LogOut } from "lucide-react";
+
+
+
 const AdminDashboard = () => {
   const [isSystemPaused, setIsSystemPaused] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
@@ -33,6 +37,15 @@ const AdminDashboard = () => {
     setIsSimulating(true);
     setTimeout(() => setIsSimulating(false), 3000);
   };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("userName");
+  
+    window.location.href = "/"; // redirect to landing page
+  };
+
   const toggleSystem = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -80,7 +93,7 @@ const AdminDashboard = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-10">
           <h1 className="text-3xl font-bold italic tracking-tight">SYSTEM OVERVIEW</h1>
-          <div className="flex gap-4">
+          <div className="flex gap-4 flex-wrap justify-end items-center">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
               <input type="text" placeholder="Search Zone ID..." className="bg-white/5 border border-white/10 rounded-full py-2 pl-10 pr-4 outline-none focus:border-red-500/50" />
@@ -91,6 +104,18 @@ const AdminDashboard = () => {
             >
               <Zap size={18} fill="currentColor" /> {isSimulating ? 'SIMULATING EVENT...' : 'SIMULATE DISRUPTION'}
             </button>
+
+          <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 px-6 py-2 rounded-full font-bold 
+          bg-white/5 border border-white/10 text-white 
+              hover:bg-red-500/20 hover:border-red-400/40 
+              transition-all shadow-lg"
+            >
+              <LogOut size={18} />
+              Logout
+            </button>
+
           </div>
         </div>
         {/* --- ADMIN CONTROL PANEL --- */}

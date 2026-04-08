@@ -13,7 +13,7 @@ import { Play } from "lucide-react";
 function DemoButton() {
           return (
             <motion.a
-              href="https://youtu.be/GmHKtuP-9eM"
+              href=""
               target="_blank"
               rel="noopener noreferrer"
               whileHover={{ scale: 1.05 }}
