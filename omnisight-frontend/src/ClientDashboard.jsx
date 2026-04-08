@@ -44,13 +44,13 @@ const ClientDashboard = () => {
         zone: userRes.data?.city || "N/A"
       });
 
-      const formatted = payoutRes.data?.map((p) => ({
+      const formatted = payoutRes.data?.recent_payouts?.map((p) => ({
         id: p.id,
-        type: p.disruption_type === "Withdrawal" ? "Transaction" : "Protection",
-        event: p.disruption_type === "Withdrawal" ? "Funds Withdrawn" : `${p.disruption_type} (${p.severity_level})`,
-        amount: p.amount < 0 ? `- ₹${Math.abs(p.amount)}` : `+ ₹${p.amount}`,
-        date: new Date(p.timestamp).toLocaleString(),
-        status: p.status
+        type: "Protection",
+        event: p.event,
+        amount: p.amount,
+        date: p.date,
+        status: "Completed"
       })) || [];
 
       setActivities(formatted);
