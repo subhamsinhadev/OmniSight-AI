@@ -1,23 +1,18 @@
 import React, { useEffect, useState } from "react";
 
+import { getPayoutHistory } from "./apis/dashboard";
+
 const PayoutHistory = () => {
   const [payouts, setPayouts] = useState([]);
 
   useEffect(() => {
     const fetchPayouts = async () => {
       try {
-        const token = localStorage.getItem("access_token");
+        const res = await getPayoutHistory();
 
-        const res = await fetch("http://127.0.0.1:8000/client/payout-history", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        
+        console.log("Payout Data:", res.data);
 
-        console.log("Payout Data:", data);
-
-        setPayouts(data);
+        setPayouts(res.data); // ✅ correct
       } catch (err) {
         console.error("Error fetching payouts:", err);
       }
