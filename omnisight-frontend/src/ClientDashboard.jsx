@@ -17,6 +17,7 @@ import {
   History,
   ArrowUpRight
 } from 'lucide-react';
+// import { LogOut } from "lucide-react";
 
 const ClientDashboard = () => {
   const navigate = useNavigate();
@@ -63,9 +64,17 @@ const ClientDashboard = () => {
     fetchData();
   }, []);
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate("/");
+  // const handleLogout = () => {
+  //   localStorage.clear();
+  //   navigate("/");
+  // };
+
+    const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("userName");
+  
+    window.location.href = "/"; // redirect to landing page
   };
 
   return (
@@ -94,9 +103,9 @@ const ClientDashboard = () => {
           </button>
         </nav>
 
-        <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-red-400 transition-colors mt-auto">
+        {/* <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-red-400 transition-colors mt-auto">
           <LogOut size={20} /> Sign Out
-        </button>
+        </button> */}
       </aside>
 
       {/* --- MAIN CONTENT --- */}
@@ -114,6 +123,18 @@ const ClientDashboard = () => {
               <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-omni-emerald to-emerald-800 flex items-center justify-center font-bold text-white">
                 {user.name.charAt(0)}
               </div>
+
+              <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2 px-6 py-2 rounded-full font-bold 
+                        bg-white/5 border border-white/10 text-white 
+                            hover:bg-red-500/20 hover:border-red-400/40 
+                            transition-all shadow-lg"
+                          >
+                            <LogOut size={18} />
+                            Logout
+              </button>
+
             </div>
         </header>
 
