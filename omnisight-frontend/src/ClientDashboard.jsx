@@ -200,11 +200,7 @@ const ClientDashboard = () => {
                 </div>
                 <div className="text-right">
                   <p className={`font-bold ${Number(item.amount) > 0 ? 'text-omni-emerald' : 'text-red-400'}`}>
-                    {!isNaN(item.amount)
-                      ? item.amount > 0
-                        ? `+₹${item.amount}`
-                        : `-₹${Math.abs(item.amount)}`
-                      : "₹0"}
+                    {Number(item.amount)}
                   </p>
                   <p className="text-[10px] uppercase tracking-widest text-gray-600 font-bold">{item.status}</p>
                 </div>
