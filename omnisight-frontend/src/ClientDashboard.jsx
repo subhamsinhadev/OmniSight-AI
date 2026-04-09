@@ -49,7 +49,7 @@ const ClientDashboard = () => {
         id: p.id,
         type: "Protection",
         event: p.event,
-        amount: Number(p.amount),
+        amount: p.amount,
         date: p.date,
         status: "Completed"
       })) || [];
