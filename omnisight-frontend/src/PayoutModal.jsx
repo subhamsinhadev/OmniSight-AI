@@ -38,6 +38,9 @@ const PayoutModal = ({ isOpen, onClose }) => {
         message: data.message,
         new_balance: data.new_balance,
       });
+      setTimeout(() => {
+        onClose();   // triggers fetchData in dashboard
+      }, 1500);
     } catch (err) {
       console.error(err);
       alert("Connection failed");
