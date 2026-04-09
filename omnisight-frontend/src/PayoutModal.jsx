@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import Confetti from "react-confetti";
 import { Shield, ChevronRight, IndianRupee } from "lucide-react";
-
+import { withdrawBalance } from "./apis/dashboard";
 const PayoutModal = ({ isOpen, onClose }) => {
   const [amount, setAmount] = useState(500);
   const [upi, setUpi] = useState("subham@upi");
@@ -31,28 +31,13 @@ const PayoutModal = ({ isOpen, onClose }) => {
     }
 
     try {
-      const token = localStorage.getItem("token");
+      const res = await withdrawBalance(amount);
+      const data = res.data;
 
-      const res = await fetch(`${API_BASE_URL}/simulate-payout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          amount,
-          upi_id: upi,
-        }),
+      setResult({
+        message: data.message,
+        new_balance: data.new_balance,
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.detail || "Payout failed");
-        return;
-      }
-
-      setResult(data);
     } catch (err) {
       console.error(err);
       alert("Connection failed");
@@ -142,8 +127,10 @@ const PayoutModal = ({ isOpen, onClose }) => {
               <p className="text-gray-400 mt-2">{result.message}</p>
 
               <div className="text-sm text-gray-500 mt-3">
-                <p>Txn ID: {result.transaction_id}</p>
-                <p>UPI: {upi}</p>
+                <div className="text-sm text-gray-500 mt-3">
+                  <p>UPI: {upi}</p>
+                  <p>Updated Balance: ₹{result.new_balance}</p>
+                </div>
               </div>
 
               <button
