@@ -841,34 +841,112 @@ const MonitoringPanel = ({ handleSimulate, isSimulating, handleLogout }) => {
 };
 
 
+const ZONE_DATA = [
+  { id: "zone_1", area: "Dharavi",      city: "Mumbai", score: 98.04, level: 3, color: "#dc2626", dist: "4.4 km" },
+  { id: "zone_2", area: "Kurla West",   city: "Mumbai", score: 98.00, level: 3, color: "#dc2626", dist: "0.6 km" },
+  { id: "zone_3", area: "Andheri East", city: "Mumbai", score: 97.85, level: 3, color: "#dc2626", dist: "4.3 km" },
+  { id: "zone_4", area: "Bandra Kurla", city: "Mumbai", score: 98.00, level: 3, color: "#dc2626", dist: "2.2 km" },
+  { id: "zone_5", area: "Thane West",   city: "Thane",  score: 98.01, level: 3, color: "#dc2626", dist: "15.6 km" },
+];
+
 const ZoneControlPanel = () => {
   const [loading, setLoading] = useState(true);
+  const [scores, setScores] = useState(ZONE_DATA.map(z => ({ ...z })));
+  const [tick, setTick] = useState(0);
+
+  // Simulate live score fluctuation
+  useState(() => {
+    const interval = setInterval(() => {
+      setScores(prev => prev.map(z => ({
+        ...z,
+        score: Math.min(100, Math.max(50, +(z.score + (Math.random() - 0.48) * 0.6).toFixed(2)))
+      })));
+      setTick(t => t + 1);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const getBadge = (level) => {
+    if (level >= 3) return { label: "DANGER", bg: "bg-red-600", text: "text-white" };
+    if (level === 2) return { label: "CAUTION", bg: "bg-yellow-500", text: "text-black" };
+    return { label: "SAFE", bg: "bg-green-600", text: "text-white" };
+  };
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-3xl p-4">
-      <h1 className="text-2xl font-bold mb-4">Zone Control</h1>
-
-      <div className="relative h-[600px] rounded-xl overflow-hidden">
-        {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[#0a0f1a] z-10">
-            <RefreshCw className="animate-spin text-red-500" />
-          </div>
-        )}
-
-        <iframe
-          srcDoc={HEATMAP_HTML}
-          title="Heatmap"
-          width="100%"
-          height="100%"
-          style={{ border: "none" }}
-          sandbox="allow-scripts allow-same-origin"
-          onLoad={() => setLoading(false)}
-        />
+    <div>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold italic tracking-tight">ZONE CONTROL</h1>
+          <p className="text-gray-500 text-sm mt-1">Live risk heatmap · Mumbai Region · DevTrails 2026</p>
+        </div>
+        <div className="flex items-center gap-2 bg-red-600/10 border border-red-500/30 rounded-full px-4 py-2">
+          <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+          <span className="text-red-400 text-sm font-semibold">LIVE</span>
+        </div>
       </div>
 
-      <p className="text-gray-500 text-sm mt-2">
-        Attach your heatmap HTML inside the HEATMAP_HTML constant.
-      </p>
+      {/* Map */}
+      <div className="bg-black/40 border border-white/10 rounded-2xl overflow-hidden mb-4">
+        <div className="relative h-[520px]">
+          {loading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-[#0a0f1a] z-10">
+              <RefreshCw className="animate-spin text-red-500" />
+            </div>
+          )}
+          <iframe
+            srcDoc={HEATMAP_HTML}
+            title="Heatmap"
+            width="100%"
+            height="100%"
+            style={{ border: "none" }}
+            sandbox="allow-scripts allow-same-origin"
+            onLoad={() => setLoading(false)}
+          />
+        </div>
+      </div>
+
+      {/* Live Zone Risk Ticker */}
+      <div className="bg-black/40 border border-white/10 rounded-2xl p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Zap size={16} className="text-red-400" />
+          <h2 className="text-sm font-bold tracking-widest text-gray-300 uppercase">Live Gig Worker Risk Scores</h2>
+          <span className="ml-auto text-xs text-gray-600">updates every 2s</span>
+        </div>
+        <div className="grid grid-cols-5 gap-3">
+          {scores.map((zone) => {
+            const badge = getBadge(zone.level);
+            const pct = Math.min(100, zone.score);
+            return (
+              <div
+                key={zone.id}
+                className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-2 hover:border-red-500/30 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500 font-mono uppercase">{zone.id}</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${badge.bg} ${badge.text}`}>
+                    {badge.label}
+                  </span>
+                </div>
+                <p className="text-sm font-semibold text-white leading-tight">{zone.area}</p>
+                <p className="text-xs text-gray-500">{zone.city} · {zone.dist}</p>
+                <div className="mt-1">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-gray-400">Risk</span>
+                    <span className="text-red-400 font-bold font-mono">{zone.score.toFixed(1)}</span>
+                  </div>
+                  <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                    <div
+                      className="h-1.5 rounded-full transition-all duration-700"
+                      style={{ width: `${pct}%`, background: zone.score > 75 ? "#dc2626" : zone.score > 50 ? "#f59e0b" : "#16a34a" }}
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 };
@@ -895,33 +973,39 @@ const AdminDashboard = () => {
     window.location.href = "/";
   };
 
+  const navItems = [
+    { key: "monitoring",  label: "Monitoring",   Icon: Activity },
+    { key: "zonecontrol", label: "Zone Control", Icon: MapIcon },
+    { key: "partners",    label: "Partners",     Icon: Users },
+    { key: "fraud",       label: "Fraud AI",     Icon: AlertOctagon },
+  ];
+
   return (
     <div className="min-h-screen bg-[#0a0f1a] text-gray-100 flex">
       {/* Sidebar */}
-      <aside className="w-20 lg:w-64 bg-black/40 border-r border-white/5 p-6">
-        <div className="flex items-center gap-2 mb-10">
-          <Shield className="text-red-500" />
-          <span className="hidden lg:block font-bold text-xl">
+      <aside className="w-20 lg:w-64 bg-[#0d1220] border-r border-white/10 p-5 flex flex-col">
+        <div className="flex items-center gap-3 mb-10 px-1">
+          <Shield className="text-red-500 shrink-0" size={22} />
+          <span className="hidden lg:block font-bold text-lg tracking-wide text-white">
             OMNISIGHT OPS
           </span>
         </div>
 
-        <nav className="space-y-3">
-          <button onClick={() => setActiveNav("monitoring")} className="nav-btn">
-            <Activity /> <span className="hidden lg:block">Monitoring</span>
-          </button>
-          <button onClick={() => setActiveNav("riskzone")} className="nav-btn">
-            <MapIcon /> <span className="hidden lg:block">Risk Zone</span>
-          </button>
-          <button onClick={() => setActiveNav("zonecontrol")} className="nav-btn">
-            <MapIcon /> <span className="hidden lg:block">Zone Control</span>
-          </button>
-          <button onClick={() => setActiveNav("partners")} className="nav-btn">
-            <Users /> <span className="hidden lg:block">Partners</span>
-          </button>
-          <button onClick={() => setActiveNav("fraud")} className="nav-btn">
-            <AlertOctagon /> <span className="hidden lg:block">Fraud AI</span>
-          </button>
+        <nav className="space-y-1">
+          {navItems.map(({ key, label, Icon }) => (
+            <button
+              key={key}
+              onClick={() => setActiveNav(key)}
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all text-left ${
+                activeNav === key
+                  ? "bg-red-600/20 text-red-400 border border-red-500/30"
+                  : "text-gray-400 hover:bg-white/5 hover:text-white border border-transparent"
+              }`}
+            >
+              <Icon size={20} className="shrink-0" />
+              <span className="hidden lg:block text-sm font-medium">{label}</span>
+            </button>
+          ))}
         </nav>
       </aside>
 
@@ -935,7 +1019,6 @@ const AdminDashboard = () => {
           />
         )}
         {activeNav === "zonecontrol" && <ZoneControlPanel />}
-        {activeNav === "riskzone" && <ComingSoonPanel title="Risk Zone" />}
         {activeNav === "partners" && <ComingSoonPanel title="Partners" />}
         {activeNav === "fraud" && <ComingSoonPanel title="Fraud AI" />}
       </main>
