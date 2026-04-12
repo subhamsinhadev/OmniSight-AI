@@ -14,7 +14,6 @@ import PlanDashboard from "./PlanDashboard"
 import BuyForm from "./BuyForm"
 import PayoutHistory from "./PayoutHistory";
 
-
 function App() {
   const [loading, setLoading] = useState(true);
   
@@ -63,9 +62,7 @@ function App() {
             />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/client/payout-history" element={<PayoutHistory />} />
-            {/* <Route path="/client/plan-dashboard" element={<PlanDashboard />} /> */}
             <Route path="/buy" element={<BuyForm />} />
-            
           </Routes>
         </Router>
       )}

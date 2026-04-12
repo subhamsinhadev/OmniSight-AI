@@ -17,7 +17,6 @@ const PlanDashboard = () => {
     }
 
     setUser(storedUser);
-
     const fetchPremium = async () => {
       try {
         const res = await fetch(

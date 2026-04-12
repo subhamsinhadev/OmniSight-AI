@@ -19,13 +19,14 @@ import logging
 import time
 import threading
 
+from pydantic import BaseModel
+
 from payout_logic import process_payout
 from decimal import Decimal
 import time, uuid, random
 from fastapi import HTTPException
 from sqlalchemy import desc
 app = FastAPI(title="OmniSight AI API")
-
 aqi_result_store = {
     "aqi": None,
     "breached": None,
@@ -396,4 +397,63 @@ def withdraw_balance(
         "status": "success", 
         "message": f"Successfully withdrawn ₹{amount}", 
         "new_balance": user.balance
+    }
+# live map
+class RouteRequest(BaseModel):
+    route: list
+
+def get_weather(lat, lon):
+    API_KEY = os.getenv("WEATHER_API_KEY")
+    url = f"http://api.weatherapi.com/v1/current.json?key={API_KEY}&q={lat},{lon}"
+    response = requests.get(url)
+    return response.json()
+
+def calculate_risk(weather):
+    current = weather.get("current", {})
+
+    rain = current.get("precip_mm", 0)
+    wind = current.get("wind_kph", 0)
+    temp = current.get("temp_c", 0)
+
+    score = 0
+
+    if rain > 2:
+        score += 2
+    if wind > 20:
+        score += 2
+    if temp > 35:
+        score += 1
+
+    if score >= 4:
+        return "High"
+    elif score >= 2:
+        return "Medium"
+    else:
+        return "Low"
+
+@app.get("/route-risk")
+def route_risk(lat: float, lon: float):
+    API_KEY = os.getenv("WEATHER_API_KEY")
+    url = f"http://api.weatherapi.com/v1/current.json?key={API_KEY}&q={lat},{lon}&aqi=yes"
+
+    res = requests.get(url)
+    data = res.json()
+    print(data)
+    if "current" not in data:
+        return {"error":data}
+    condition = data["current"]["condition"]["text"]
+
+    risk = "LOW"
+
+    if "Rain" in condition:
+        risk = "HIGH"
+    elif "Storm" in condition:
+        risk = "EXTREME"
+
+    return {
+        "risk": risk,
+        "condition": condition,
+        "location": data["location"]["name"],  
+        "region": data["location"]["region"],   
+        "country": data["location"]["country"]
     }
