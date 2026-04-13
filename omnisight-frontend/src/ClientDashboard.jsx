@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 import { getClientData, getDashboardActivity } from "./apis/dashboard";
 import PayoutModal from './PayoutModal';
+import { Menu } from "lucide-react";
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 import L from "leaflet";
@@ -33,7 +34,8 @@ const ClientDashboard = () => {
     zone: "Loading..."
   });
 
-
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const [open, setOpen] = useState(false);
   const [activities, setActivities] = useState([]);
@@ -64,6 +66,15 @@ const ClientDashboard = () => {
       console.error("Dashboard error:", err);
     }
   };
+
+  useEffect(() => {
+    const close = () => {
+      setMenuOpen(false);
+      setProfileOpen(false);
+    };
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, []);
 
   useEffect(() => {
     // Initial load
@@ -271,7 +282,105 @@ const ClientDashboard = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-omni-dark text-gray-100 font-sans">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-omni-dark text-gray-100 font-sans">
+        {/* --- MOBILE HEADER --- */}
+    <div className="lg:hidden flex items-center justify-between px-4 py-4 border-b border-white/10 bg-omni-dark-card/40 backdrop-blur-md">
+
+      {/* LEFT: Logo */}
+      <div className="flex items-center gap-2">
+        <div className="p-1.5 bg-omni-emerald rounded-lg">
+          <Shield className="w-4 h-4 text-black" />
+        </div>
+        <span className="text-sm font-bold">
+          OmniSight <span className="text-omni-emerald">AI</span>
+        </span>
+      </div>
+
+      {/* RIGHT: Actions */}
+      <div className="flex items-center gap-3">
+
+        {/* MENU DROPDOWN */}
+        <div className="relative">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setMenuOpen(!menuOpen);
+              setProfileOpen(false);
+            }}
+            className="p-2 bg-white/5 rounded-lg"
+          >
+            <Menu size={18} />
+          </button>
+
+          {menuOpen && (
+            <div className="absolute right-0 mt-2 w-44 bg-black/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-lg p-2 z-50">
+
+              <button
+                onClick={() => navigate("/client/dashboard")}
+                className="flex items-center gap-2 w-full px-3 py-2 hover:bg-white/10 rounded-lg"
+              >
+                <LayoutDashboard size={16} /> Dashboard
+              </button>
+
+              <button
+                onClick={() => navigate("/client/payout-history")}
+                className="flex items-center gap-2 w-full px-3 py-2 hover:bg-white/10 rounded-lg"
+              >
+                <History size={16} /> Payouts
+              </button>
+
+              <button
+                onClick={() => navigate("/client/heatmap")}
+                className="flex items-center gap-2 w-full px-3 py-2 hover:bg-white/10 rounded-lg"
+              >
+                <MapPin size={16} /> Heatmap
+              </button>
+
+            </div>
+          )}
+        </div>
+
+        {/* PROFILE DROPDOWN */}
+        <div className="relative">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setProfileOpen(!profileOpen);
+              setMenuOpen(false);
+            }}
+            className="w-9 h-9 rounded-full bg-omni-emerald flex items-center justify-center text-black font-bold"
+          >
+            {user.name?.charAt(0)}
+          </button>
+
+          {profileOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-black/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-lg p-3 z-50">
+
+              <div className="text-sm text-gray-300 mb-2">
+                Balance
+              </div>
+
+              <div className="text-lg font-bold text-omni-emerald mb-3">
+                {user.balance}
+              </div>
+
+              <button
+                onClick={handleLogout}
+                className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full font-bold 
+                bg-white/5 border border-white/10 text-white 
+                hover:bg-red-500/20 hover:border-red-400/40 
+                transition-all shadow-lg"
+              >
+                <LogOut size={18} />
+                Logout
+              </button>
+
+            </div>
+          )}
+        </div>
+
+      </div>
+    </div>
 
       {/* --- SIDEBAR --- */}
       <aside className="w-64 border-r border-white/5 bg-omni-dark-card/30 backdrop-blur-md hidden lg:flex flex-col p-6">
@@ -309,7 +418,7 @@ const ClientDashboard = () => {
             <p className="text-gray-400 text-sm">Your income is protected in <span className="text-omni-emerald font-semibold">{user.zone}</span></p>
           </div>
           <div className="flex items-center gap-4">
-            <div className="text-right hidden sm:block">
+            <div className="text-right flex flex-col items-end">
               <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Wallet Balance</p>
               <p className="text-xl font-bold text-omni-emerald">₹{user.balance}</p>
             </div>
