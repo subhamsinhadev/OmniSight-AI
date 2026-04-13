@@ -26,6 +26,11 @@ from decimal import Decimal
 import time, uuid, random
 from fastapi import HTTPException
 from sqlalchemy import desc
+
+from fraud_engine import evaluate_claim
+from models import FraudLog
+
+
 app = FastAPI(title="OmniSight AI API")
 aqi_result_store = {
     "aqi": None,
@@ -308,13 +313,64 @@ def delayed_aqi_process(city: str = "Asansol"):
 
         if breached:
             logging.warning("Threshold breached")
-            payout_status = process_payout("AQI", aqi)
 
-            payout_info = {
-                "type": "AQI",
-                "value": aqi,
-                "status": payout_status
-            }
+            db = SessionLocal()
+            users = db.query(User).filter(User.city == city).all()
+
+            event_type = "AQI"
+            value = aqi
+
+            successful_payouts = 0
+
+            for user in users:
+
+              
+
+                log = FraudLog(
+                    user_id=user.id,
+                    risk_score=fraud_result["risk_score"],
+                    risk_level=fraud_result["risk_level"],
+                    reasons=",".join(fraud_result["reasons"]),
+                    created_at=datetime.now()
+                )
+
+                db.add(log)
+                db.commit()
+
+                context = {
+                    "sudden_location_jump": False,
+                    "recent_activity": True,
+                    "is_emulator": False,
+                    "is_rooted": False,
+                    "suspicious_cluster": False,
+                    "network_mismatch": False
+                }
+
+                fraud_result = evaluate_claim(user, db, context)
+
+                logging.info(f"User {user.id} Risk: {fraud_result}")
+
+                #  HIGH RISK → BLOCK
+                if fraud_result["risk_level"] == "HIGH":
+                    logging.warning(f"🚨 Fraud detected for user {user.id}")
+                    continue
+
+                #  MEDIUM RISK → SKIP
+                if fraud_result["risk_level"] == "MEDIUM":
+                    logging.warning(f"⚠️ Medium risk user {user.id}")
+                    continue
+
+                #  LOW RISK → PAYOUT
+                process_payout(event_type, value, user, db)
+                successful_payouts += 1
+
+            db.close()
+
+        payout_info = {
+            "type": event_type,
+            "value": value,
+            "status": f"{successful_payouts} users paid"
+        }
 
         # ✅ store result
         aqi_result_store.update({
@@ -323,12 +379,10 @@ def delayed_aqi_process(city: str = "Asansol"):
             "payout": payout_info,
             "last_updated": datetime.now().isoformat()
         })
-
         logging.info(f"AQI stored: {aqi}")
-
+    
     except Exception as e:
         logging.error(f"AQI Background Error: {e}")
-
 
 @app.get("/aqi")
 def run_oracle(city: str = "Asansol"):
@@ -456,4 +510,43 @@ def route_risk(lat: float, lon: float):
         "location": data["location"]["name"],  
         "region": data["location"]["region"],   
         "country": data["location"]["country"]
+    }
+
+
+@app.get("/admin/fraud-logs")
+def get_fraud_logs(
+    db: Session = Depends(get_db),
+    current_user=Depends(auth.require_role("admin"))
+):
+    logs = db.query(models.FraudLog)\
+        .order_by(models.FraudLog.created_at.desc())\
+        .limit(10)\
+        .all()
+
+    return [
+        {
+            "user_id": log.user_id,
+            "risk_score": log.risk_score,
+            "risk_level": log.risk_level,
+            "reasons": log.reasons,
+            "time": log.created_at
+        }
+        for log in logs
+    ]
+
+
+@app.get("/admin/fraud-stats")
+def fraud_stats(
+    db: Session = Depends(get_db),
+    current_user=Depends(auth.require_role("admin"))
+):
+    total = db.query(models.FraudLog).count()
+
+    high = db.query(models.FraudLog)\
+        .filter(models.FraudLog.risk_level == "HIGH")\
+        .count()
+
+    return {
+        "total_flags": total,
+        "high_risk": high
     }

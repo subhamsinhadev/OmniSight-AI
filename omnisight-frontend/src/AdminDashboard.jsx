@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Shield,
   Activity,
@@ -673,6 +674,33 @@ const HEATMAP_HTML = `<!DOCTYPE html>
 
 
 const MonitoringPanel = ({ handleSimulate, isSimulating, handleLogout }) => {
+
+const [fraudLogs, setFraudLogs] = useState([]);
+const [fraudStats, setFraudStats] = useState({
+  total_flags: 0,
+  high_risk: 0
+});
+
+useEffect(() => {
+  const fetchFraudData = async () => {
+    try {
+      const logsRes = await axios.get("/admin/fraud-logs");
+      const statsRes = await axios.get("/admin/fraud-stats");
+
+      setFraudLogs(
+        Array.isArray(logsRes.data)
+          ? logsRes.data
+          : logsRes.data?.logs || []
+      );
+      setFraudStats(statsRes.data);
+    } catch (err) {
+      console.error("Fraud fetch error:", err);
+    }
+  };
+
+  fetchFraudData();
+}, []);
+
   return (
     <>
       {/* Header */}
@@ -751,7 +779,7 @@ const MonitoringPanel = ({ handleSimulate, isSimulating, handleLogout }) => {
         {[
           { label: "TOTAL PARTNERS", value: "12,402", icon: <Users /> },
           { label: "ACTIVE TRIGGERS", value: "3", icon: <Zap /> },
-          { label: "FRAUD FLAGGED", value: "12", icon: <AlertOctagon /> },
+          { label: "FRAUD FLAGGED", value: fraudStats.high_risk, icon: <AlertOctagon /> },,
           { label: "PAYOUTS TODAY", value: "₹42,500", icon: <Activity /> }
         ].map((card, index) => (
           <div
@@ -811,19 +839,19 @@ const MonitoringPanel = ({ handleSimulate, isSimulating, handleLogout }) => {
           <h2 className="text-lg font-semibold mb-4">
             AI Anomaly Shield
           </h2>
-          {[
-            "GPS Spoofing Detected",
-            "Multiple Payout Requests",
-            "Zone/IP Mismatch"
-          ].map((item, index) => (
+          {fraudLogs.map((log, index) => (
             <div
               key={index}
               className="border border-red-500/20 rounded-xl p-4 mb-4"
             >
-              <p className="text-orange-400 font-semibold">{item}</p>
-              <p className="text-gray-400 text-sm">
-                Suspicious activity detected.
+              <p className="text-orange-400 font-semibold">
+                {log.risk_level} Risk
               </p>
+
+              <p className="text-gray-400 text-sm">
+                {log.reasons}
+              </p>
+
               <div className="flex gap-2 mt-2">
                 <button className="bg-red-600 px-3 py-1 rounded-md">
                   Block

@@ -29,3 +29,13 @@ class Payout(Base):
     payout_percentage = Column(Integer)  # 30 or 100
     timestamp = Column(DateTime, default=datetime.utcnow)
     status = Column(String(20), default="Released") # Released, Failed, Inprocess
+
+class FraudLog(Base):
+    __tablename__ = "fraud_logs"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer)
+    risk_score = Column(Integer)
+    risk_level = Column(String)
+    reasons = Column(String)
+    created_at = Column(DateTime)
