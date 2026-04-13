@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status,Response
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,7 +18,7 @@ import random
 import logging
 import time
 import threading
-
+import certifi
 from pydantic import BaseModel
 
 from payout_logic import process_payout
@@ -581,6 +581,19 @@ def route_risk(lat: float, lon: float):
         "region": data["location"]["region"],   
         "country": data["location"]["country"]
     }
+    
+@app.get("/traffic-tile/{z}/{x}/{y}")
+def traffic_tile(z: int, x: int, y: int):
+    API_KEY = os.getenv("TOMTOM_API_KEY")
+
+    url = f"https://api.tomtom.com/traffic/map/4/tile/flow/relative/{z}/{x}/{y}.png?key={API_KEY}"
+    try:
+        res = requests.get(url,timeout=5,verify=certifi.where())
+        if res.status_code!=200:
+            return {"error":res.text}
+        return Response(content=res.content, media_type="image/png")
+    except Exception as e:
+        return {"error": "Traffic fetch failed"}
 
 
 @app.get("/admin/fraud-logs")

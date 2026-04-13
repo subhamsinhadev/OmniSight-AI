@@ -109,28 +109,44 @@ const ClientDashboard = () => {
 
   //map useEffect
   useEffect(() => {
-
     const timer = setTimeout(() => {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const current = [pos.coords.latitude, pos.coords.longitude];
-
           fixLeafletIcons();
           if (mapRef.current) return;
           const map = L.map("dashboardMap", {
             maxZoom: 20,
             minZoom: 3
           }).setView(current, 16);
-          map.getPane("tilePane").style.zIndex = 1;
-          map.getPane("overlayPane").style.zIndex = 2;
-          map.getPane("markerPane").style.zIndex = 3;
-          map.getPane("tooltipPane").style.zIndex = 4;
-          map.getPane("popupPane").style.zIndex = 5;
+
+          // map.getPane("tilePane").style.zIndex = 1;
+          // map.getPane("overlayPane").style.zIndex = 2;
+          // map.getPane("markerPane").style.zIndex = 3;
+          // map.getPane("tooltipPane").style.zIndex = 4;
+          // map.getPane("popupPane").style.zIndex = 5;
+          map.createPane("trafficPane");
+          map.getPane("trafficPane").style.zIndex = 650; // above tiles
           mapRef.current = map;
           L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             attribution: "© OpenStreetMap",
             maxZoom: 20
           }).addTo(map);
+          //traffic view
+          const trafficLayer = L.tileLayer(
+            `${API_BASE_URL}/traffic-tile/{z}/{x}/{y}`,
+            {
+              attribution: 'Traffic © TomTom',
+              maxZoom: 19,
+              opacity: 0.7,
+              pane: "trafficPane" 
+            }
+          ).addTo(map);
+
+          map.on("zoomend moveend", () => {
+            trafficLayer.bringToFront();
+          });
+
           const fetchWeather = async (lat, lon) => {
             try {
               const res = await fetch(
