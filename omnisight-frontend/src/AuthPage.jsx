@@ -30,7 +30,11 @@ const AuthPage = () => {
 
 useEffect(() => {
   const token = localStorage.getItem("token");
-  if (token) setOpen(true);
+  const isNewUser = localStorage.getItem("isNewUser");
+
+  if (token && isNewUser !== "true") {
+    setOpen(true);
+  }
 }, []);
 
 
@@ -95,15 +99,21 @@ const handleLogout = () => {
           avg_daily_income: data.avg_daily_income,
           activity_tier: data.activity_tier
         }));
-
+        const isNewUser = localStorage.getItem("isNewUser");
+        const user = JSON.parse(localStorage.getItem("user"));
         if (data.role === "admin") {
           navigate("/admin/dashboard");
         } else {
-          // navigate("/client/dashboard");
-          navigate("/client/dashboard");
+          if (isNewUser === "true" && !user?.activity_tier) {
+            localStorage.removeItem("isNewUser");
+            navigate("/client/plan-dashboard");
+          } else {
+            navigate("/client/dashboard");
+          }
         }
       } else {
         alert("Account created successfully! Please login.");
+        localStorage.setItem("isNewUser", "true");
         setIsLogin(true);
         setName("");
       }
