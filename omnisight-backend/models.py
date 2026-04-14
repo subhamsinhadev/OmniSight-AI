@@ -39,5 +39,5 @@ class FraudLog(Base):
     user_id = Column(Integer)
     risk_score = Column(Integer)
     risk_level = Column(String)
-    reason = Column(String)
+    reasons = Column(String)
     timestamp = Column(DateTime)
