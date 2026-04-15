@@ -54,7 +54,7 @@ def evaluate_kill_switch(db: Session):
         .count()
 
     # 🔥 CONDITIONS
-    if total_fraud > 0:
+    if total_fraud > 5:
         kill_switch_status["active"] = True
         kill_switch_status["reason"] = "High fraud activity detected"
 
