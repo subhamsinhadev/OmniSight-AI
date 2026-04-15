@@ -73,6 +73,19 @@ const BuyPage = () => {
               razorpay_order_id: response.razorpay_order_id,
             }),
           });
+           const storedUser = JSON.parse(localStorage.getItem("user"));
+           await fetch(
+            `${import.meta.env.VITE_API_URL}/complete-onboarding?user_id=${storedUser.id}&plan=${plan.title.toLowerCase()}`,
+            {
+              method: "POST",
+            }
+          );
+          const updatedUser = {
+            ...storedUser,
+            activity_tier: plan.title.toLowerCase(),
+            is_onboarded: 1,
+          };
+          localStorage.setItem("user", JSON.stringify(updatedUser));
 
           setSuccess(true);
           setTimeout(() => navigate("/client/dashboard"), 2500);

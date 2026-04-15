@@ -42,22 +42,6 @@ const PlanDashboard = () => {
   try {
     const storedUser = JSON.parse(localStorage.getItem("user"));
 
-   await fetch(
-  `${API_BASE_URL}/complete-onboarding?user_id=${storedUser.id}&plan=${plan.title.toLowerCase()}`,
-  {
-    method: "POST",
-  }
-);
-
-    //  Update localStorage instantly
-    const updatedUser = {
-      ...storedUser,
-      activity_tier: plan.title.toLowerCase(),
-      is_onboarded: 1,
-    };
-
-    localStorage.setItem("user", JSON.stringify(updatedUser));
-
    navigate("/buy", { state: { plan } });
 
   } catch (err) {
