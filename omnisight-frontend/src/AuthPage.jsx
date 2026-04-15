@@ -21,11 +21,14 @@ const AuthPage = () => {
 
   const handleContinue = () => {
     const role = localStorage.getItem("role");
-
+    
     if (role === "admin") {
       navigate("/admin/dashboard");
     } else {
-      if (data.is_onboarded === 0) {
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : null;
+      
+      if (user && user.is_onboarded === 0) {
         navigate("/client/plan-dashboard");
       } else {
         navigate("/client/dashboard");
@@ -79,7 +82,7 @@ const AuthPage = () => {
           city: data.city,
           avg_daily_income: data.avg_daily_income,
           activity_tier: data.activity_tier,
-          is_onboarded: data.is_onboarded 
+          is_onboarded: data.is_onboarded
         }));
 
         if (data.role === "admin") {
@@ -107,13 +110,13 @@ const AuthPage = () => {
 
   return (
     <div className="min-h-screen bg-[#060606] flex items-center justify-center p-6 relative overflow-hidden font-sans">
-      
+
       {/* Background Glows */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px]" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-900/20 rounded-full blur-[120px]" />
 
       <div className="w-full max-w-[420px] z-10">
-        
+
         {/* Logo */}
         <div className="flex items-center justify-center gap-3 mb-10">
           <div className="p-2.5 bg-emerald-500 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.4)]">

@@ -1,7 +1,7 @@
 """
-OmniSight AI — Zone Risk Heatmap Generator  (Live API version)
-===============================================================
-DevTrails 2026 · Gig Worker Safety
+OmniSight AI — Zone Risk Heatmap Generator  (Live API version · 20 Zones)
+==========================================================================
+DevTrails 2026 · Gig Worker Safety · Pan-India Coverage
 
 Changes from the original generate_zone_heatmap.py
 ---------------------------------------------------
@@ -9,9 +9,10 @@ Changes from the original generate_zone_heatmap.py
    of reading zone_risk_heatmap_latest.csv
 2. Falls back to static CSV if the API is unreachable (local/CI usage)
 3. Injects a <script> block into the output HTML so the page
-   auto-refreshes its data every 15 minutes without a full page reload —
+   auto-refreshes its data every 10 minutes without a full page reload —
    this means the iframe in AdminDashboard / ClientDashboard always
    shows current risk without touching the React components
+4. Covers 20 zones across Mumbai, Delhi, Kolkata, Chennai
 
 Run locally
 -----------
@@ -58,7 +59,7 @@ CSV_FALLBACK = (
     / "model-risk-prediction"
     / "data"
     / "processed"
-    / "zone_risk_heatmap_latest.csv"
+    / "zone_risk_scores_latest.csv"
 )
 
 # ---------------------------------------------------------------------------
@@ -67,17 +68,36 @@ CSV_FALLBACK = (
 
 API_BASE      = os.getenv("OMNISIGHT_API", "http://127.0.0.1:8000")
 HEATMAP_URL   = f"{API_BASE}/zones/risk/heatmap"
-USER_LAT      = 19.0760
-USER_LON      = 72.8777
-RADIUS_KM     = 25.0
+USER_LAT      = 22.5       # India center
+USER_LON      = 80.0
+RADIUS_KM     = 1500.0
 
 # Zone geo fallback (used when API AND csv are both unavailable)
 ZONE_GEO: dict[str, dict] = {
-    "zone_1": {"display_name": "Dharavi",      "city": "Mumbai", "latitude": 19.0422, "longitude": 72.8553},
-    "zone_2": {"display_name": "Kurla West",   "city": "Mumbai", "latitude": 19.0728, "longitude": 72.8826},
-    "zone_3": {"display_name": "Andheri East", "city": "Mumbai", "latitude": 19.1136, "longitude": 72.8697},
-    "zone_4": {"display_name": "Bandra Kurla", "city": "Mumbai", "latitude": 19.0596, "longitude": 72.8656},
-    "zone_5": {"display_name": "Thane West",   "city": "Thane",  "latitude": 19.1852, "longitude": 72.9710},
+    # Mumbai
+    "zone_1":  {"display_name": "Dharavi",         "city": "Mumbai",  "latitude": 19.0422, "longitude": 72.8553},
+    "zone_2":  {"display_name": "Kurla West",      "city": "Mumbai",  "latitude": 19.0728, "longitude": 72.8826},
+    "zone_3":  {"display_name": "Andheri East",    "city": "Mumbai",  "latitude": 19.1136, "longitude": 72.8697},
+    "zone_4":  {"display_name": "Bandra Kurla",    "city": "Mumbai",  "latitude": 19.0596, "longitude": 72.8656},
+    "zone_5":  {"display_name": "Thane West",      "city": "Mumbai",  "latitude": 19.1852, "longitude": 72.9710},
+    # Delhi
+    "zone_6":  {"display_name": "Chandni Chowk",   "city": "Delhi",   "latitude": 28.6506, "longitude": 77.2300},
+    "zone_7":  {"display_name": "Connaught Place",  "city": "Delhi",   "latitude": 28.6315, "longitude": 77.2167},
+    "zone_8":  {"display_name": "Lajpat Nagar",    "city": "Delhi",   "latitude": 28.5700, "longitude": 77.2400},
+    "zone_9":  {"display_name": "Dwarka",          "city": "Delhi",   "latitude": 28.5921, "longitude": 77.0460},
+    "zone_10": {"display_name": "Rohini",          "city": "Delhi",   "latitude": 28.7495, "longitude": 77.0565},
+    # Kolkata
+    "zone_11": {"display_name": "Salt Lake",       "city": "Kolkata", "latitude": 22.5800, "longitude": 88.4150},
+    "zone_12": {"display_name": "Howrah",          "city": "Kolkata", "latitude": 22.5958, "longitude": 88.2636},
+    "zone_13": {"display_name": "Park Street",     "city": "Kolkata", "latitude": 22.5510, "longitude": 88.3530},
+    "zone_14": {"display_name": "Jadavpur",        "city": "Kolkata", "latitude": 22.4990, "longitude": 88.3710},
+    "zone_15": {"display_name": "Dum Dum",         "city": "Kolkata", "latitude": 22.6352, "longitude": 88.4230},
+    # Chennai
+    "zone_16": {"display_name": "T. Nagar",        "city": "Chennai", "latitude": 13.0418, "longitude": 80.2341},
+    "zone_17": {"display_name": "Adyar",           "city": "Chennai", "latitude": 13.0067, "longitude": 80.2572},
+    "zone_18": {"display_name": "Anna Nagar",      "city": "Chennai", "latitude": 13.0850, "longitude": 80.2100},
+    "zone_19": {"display_name": "Velachery",       "city": "Chennai", "latitude": 12.9815, "longitude": 80.2180},
+    "zone_20": {"display_name": "Tambaram",        "city": "Chennai", "latitude": 12.9249, "longitude": 80.1000},
 }
 
 # ---------------------------------------------------------------------------
@@ -101,7 +121,7 @@ def risk_label(score: float) -> tuple[str, str]:
     return "SAFE",    "#16a34a"
 
 # ---------------------------------------------------------------------------
-# Data loading — live API → CSV fallback → hardcoded fallback
+# Data loading — live API -> CSV fallback -> hardcoded fallback
 # ---------------------------------------------------------------------------
 
 def load_from_api() -> list[dict] | None:
@@ -113,10 +133,10 @@ def load_from_api() -> list[dict] | None:
         zones = payload.get("zones", [])
         if not zones:
             return None
-        print(f"[OmniSight] ✅ Loaded {len(zones)} zones from live API ({HEATMAP_URL})")
+        print(f"[OmniSight] Loaded {len(zones)} zones from live API ({HEATMAP_URL})")
         return zones
     except Exception as exc:
-        print(f"[OmniSight] ⚠️  Live API unavailable ({exc}) — trying CSV fallback")
+        print(f"[OmniSight] Live API unavailable ({exc}) -- trying CSV fallback")
         return None
 
 
@@ -140,7 +160,7 @@ def load_from_csv() -> list[dict] | None:
                 "id":           zid,
                 "display_name": geo.get("display_name", zid),
                 "city":         geo.get("city", ""),
-                "center":       [geo.get("latitude", 19.07), geo.get("longitude", 72.88)],
+                "center":       [geo.get("latitude", 22.5), geo.get("longitude", 80.0)],
                 "risk_score":   score,
                 "risk_bin":     str(row.get("risk_bin", "medium")),
                 "risk_label":   label,
@@ -149,19 +169,21 @@ def load_from_csv() -> list[dict] | None:
                 "precip_mm":    0.0,
                 "wind_kph":     0.0,
             })
-        print(f"[OmniSight] ✅ Loaded {len(zones)} zones from CSV fallback")
+        print(f"[OmniSight] Loaded {len(zones)} zones from CSV fallback")
         return zones
     except Exception as exc:
-        print(f"[OmniSight] ⚠️  CSV fallback failed ({exc}) — using hardcoded data")
+        print(f"[OmniSight] CSV fallback failed ({exc}) -- using hardcoded data")
         return None
 
 
 def load_hardcoded_fallback() -> list[dict]:
     """Last resort — hardcoded representative scores."""
-    print("[OmniSight] ⚠️  Using hardcoded fallback data")
+    print("[OmniSight] Using hardcoded fallback data (20 zones)")
     fallback_scores = {
-        "zone_1": 72.0, "zone_2": 65.0,
-        "zone_3": 41.0, "zone_4": 68.0, "zone_5": 38.0,
+        "zone_1": 72.0, "zone_2": 65.0, "zone_3": 41.0, "zone_4": 68.0, "zone_5": 38.0,
+        "zone_6": 72.0, "zone_7": 55.0, "zone_8": 60.0, "zone_9": 45.0, "zone_10": 50.0,
+        "zone_11": 68.0, "zone_12": 78.0, "zone_13": 50.0, "zone_14": 58.0, "zone_15": 62.0,
+        "zone_16": 58.0, "zone_17": 70.0, "zone_18": 48.0, "zone_19": 65.0, "zone_20": 40.0,
     }
     zones = []
     for zid, geo in ZONE_GEO.items():
@@ -188,7 +210,7 @@ def load_zones() -> list[dict]:
 
 # ---------------------------------------------------------------------------
 # Self-refresh JavaScript
-# Injected into the HTML so the iframe auto-updates every 15 minutes.
+# Injected into the HTML so the iframe auto-updates every 10 minutes.
 # Calls GET /zones/risk/heatmap, then updates marker colors + popups.
 # ---------------------------------------------------------------------------
 
@@ -196,7 +218,7 @@ SELF_REFRESH_JS = f"""
 <script>
 (function () {{
   const API_BASE       = "{API_BASE}";
-  const REFRESH_MS     = 15 * 60 * 1000;   // 15 minutes
+  const REFRESH_MS     = 10 * 60 * 1000;   // 10 minutes
   const HEATMAP_ENDPOINT = API_BASE + "/zones/risk/heatmap";
 
   function labelFromScore(score) {{
@@ -211,7 +233,7 @@ SELF_REFRESH_JS = f"""
       "<div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'>" +
       "<div style='background:" + color + ";color:#fff;padding:6px 10px;" +
         "border-radius:8px 8px 0 0;font-weight:700'>" +
-        z.id.toUpperCase().replace("_", " ") + " — " + label + "</div>" +
+        z.id.toUpperCase().replace("_", " ") + " -- " + label + "</div>" +
       "<div style='padding:8px 10px;border:1px solid #e5e7eb;" +
         "border-top:none;border-radius:0 0 8px 8px'>" +
         "<b>Area:</b> " + z.display_name + " | <b>City:</b> " + z.city + "<br/>" +
@@ -225,8 +247,6 @@ SELF_REFRESH_JS = f"""
 
   // Store references to Leaflet circle markers keyed by zone id
   const markerMap = {{}};
-  // The map object is created by Folium as window._leaflet_map or similar.
-  // We poll until the map is available, then register markers.
   function waitForMap(cb, attempts) {{
     attempts = attempts || 0;
     const maps = Object.values(window).filter(v => v && v._leaflet_id && v._container);
@@ -243,36 +263,31 @@ SELF_REFRESH_JS = f"""
           const m = markerMap[z.id];
           if (!m) return;
           const {{ color }} = labelFromScore(z.risk_score);
-          // Update circle color
           if (m.circle) {{
             m.circle.setStyle({{ color: color, fillColor: color }});
             m.circle.setRadius(500 + z.risk_score * 11);
           }}
-          // Update popup
           if (m.marker) {{
             m.marker.getPopup().setContent(buildPopup(z));
           }}
         }});
 
-        // Update banner timestamp
         const banner = document.getElementById("omni-refresh-banner");
         if (banner) {{
           const now = new Date().toLocaleString("en-IN", {{timeZone:"Asia/Kolkata",hour12:true}});
-          banner.textContent = "⟳ OmniSight AI — Risk scores refreshed at " + now + " IST";
+          banner.textContent = "OmniSight AI -- Risk scores refreshed at " + now + " IST (" + zones.length + " zones)";
         }}
       }})
       .catch(err => console.warn("[OmniSight] Refresh failed:", err));
   }}
 
-  // Kick off
   waitForMap(function (map) {{
     map.eachLayer(function (layer) {{
-      // Tag Folium CircleMarkers with their zone id via tooltip text
       if (layer.options && layer.options.radius && layer.getTooltip) {{
         const tip = layer.getTooltip();
         if (!tip) return;
         const text = tip._content || "";
-        const match = text.match(/zone_\\d/i);
+        const match = text.match(/zone_\\d+/i);
         if (match) {{
           const zid = match[0].toLowerCase();
           if (!markerMap[zid]) markerMap[zid] = {{}};
@@ -284,7 +299,7 @@ SELF_REFRESH_JS = f"""
   }});
 
   setInterval(refreshScores, REFRESH_MS);
-  console.log("[OmniSight] Self-refresh armed — updating every 15 min from", HEATMAP_ENDPOINT);
+  console.log("[OmniSight] Self-refresh armed -- updating every 10 min from", HEATMAP_ENDPOINT);
 }})();
 </script>
 """
@@ -295,7 +310,7 @@ REFRESH_BANNER = """
          background:rgba(10,15,26,0.92);color:#6b7280;
          font-family:Inter,sans-serif;font-size:10px;
          text-align:center;padding:4px 0;border-top:1px solid rgba(255,255,255,0.05)">
-  ⟳ OmniSight AI — Loading live risk data...
+  OmniSight AI -- Loading live risk data (20 zones)...
 </div>
 """
 
@@ -307,21 +322,21 @@ def build_map(zones: list[dict]) -> "folium.Map":
     uc = [USER_LAT, USER_LON]
     m = folium.Map(
         location=uc,
-        zoom_start=12,
+        zoom_start=5,
         tiles="cartodbpositron",
         control_scale=True,
     )
 
     # Zone layers by risk level
-    layer_danger  = folium.FeatureGroup(name="🔴 DANGER  ≥75",   show=True)
-    layer_caution = folium.FeatureGroup(name="🟡 CAUTION 50–74", show=True)
-    layer_safe    = folium.FeatureGroup(name="🟢 SAFE    <50",   show=True)
+    layer_danger  = folium.FeatureGroup(name="DANGER  >=75",   show=True)
+    layer_caution = folium.FeatureGroup(name="CAUTION 50-74", show=True)
+    layer_safe    = folium.FeatureGroup(name="SAFE    <50",   show=True)
 
     layer_map = {"DANGER": layer_danger, "CAUTION": layer_caution, "SAFE": layer_safe}
 
-    marker_layer = folium.FeatureGroup(name="📍 Zone Markers", show=True)
+    marker_layer = folium.FeatureGroup(name="Zone Markers", show=True)
     heatmap_pts: list = []
-    nearest_layer = folium.FeatureGroup(name="🔗 Nearest Zone Links", show=True)
+    nearest_layer = folium.FeatureGroup(name="Nearest Zone Links", show=True)
 
     for z in zones:
         score = z["risk_score"]
@@ -345,7 +360,7 @@ def build_map(zones: list[dict]) -> "folium.Map":
             f"<div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'>"
             f"<div style='background:{color};color:#fff;padding:6px 10px;"
             f"border-radius:8px 8px 0 0;font-weight:700'>"
-            f"{z['id'].upper().replace('_',' ')} — {lbl}</div>"
+            f"{z['id'].upper().replace('_',' ')} -- {lbl}</div>"
             f"<div style='padding:8px 10px;border:1px solid #e5e7eb;"
             f"border-top:none;border-radius:0 0 8px 8px'>"
             f"<b>Area:</b> {z['display_name']} | <b>City:</b> {z['city']}<br/>"
@@ -353,7 +368,7 @@ def build_map(zones: list[dict]) -> "folium.Map":
             f"{score:.2f}</span>/100<br/>"
             f"<b>Condition:</b> {z['condition']}<br/>"
             f"<b>Rain:</b> {z['precip_mm']} mm | <b>Wind:</b> {z['wind_kph']} kph<br/>"
-            f"<b>Distance:</b> {dist:.2f} km"
+            f"<b>Distance:</b> {dist:.0f} km"
             f"</div></div>"
         )
 
@@ -364,7 +379,7 @@ def build_map(zones: list[dict]) -> "folium.Map":
             color=color,
             fill=True,
             fill_opacity=0.88,
-            tooltip=f"{z['id']} | {z['display_name']} | {score:.1f}/100 | {dist:.1f}km",
+            tooltip=f"{z['id']} | {z['display_name']} | {z['city']} | {score:.1f}/100",
             popup=folium.Popup(popup_html, max_width=280),
         ).add_to(marker_layer)
 
@@ -377,7 +392,7 @@ def build_map(zones: list[dict]) -> "folium.Map":
                     f"border-radius:8px;font-size:10px;font-weight:700;"
                     f"white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.3);"
                     f"margin-top:18px'>"
-                    f"{z['id'].upper().replace('_',' ')} · {score:.0f}</div>"
+                    f"{z['id'].upper().replace('_',' ')} - {score:.0f}</div>"
                 ),
                 icon_size=(110, 22),
                 icon_anchor=(55, 0),
@@ -385,40 +400,6 @@ def build_map(zones: list[dict]) -> "folium.Map":
         ).add_to(marker_layer)
 
         heatmap_pts.append([lat, lon, max(0.0, score / 100.0)])
-
-    # User location pin
-    folium.Marker(
-        uc,
-        tooltip="📍 Gig Worker Location",
-        icon=folium.Icon(color="blue", icon="motorcycle", prefix="fa"),
-    ).add_to(m)
-
-    # Scan radius ring
-    folium.Circle(
-        uc,
-        radius=RADIUS_KM * 1000,
-        color="#0ea5e9",
-        fill=False,
-        weight=2,
-        dash_array="6",
-        tooltip=f"OmniSight {RADIUS_KM:.0f}km scan radius",
-    ).add_to(m)
-
-    # Nearest zone link lines
-    sorted_zones = sorted(
-        zones,
-        key=lambda z: haversine(USER_LAT, USER_LON, z["center"][0], z["center"][1]),
-    )
-    for z in sorted_zones[:3]:
-        _, color = risk_label(z["risk_score"])
-        dist = haversine(USER_LAT, USER_LON, z["center"][0], z["center"][1])
-        folium.PolyLine(
-            [uc, z["center"]],
-            color=color,
-            weight=2.5,
-            opacity=0.55,
-            tooltip=f"{z['display_name']} → {dist:.2f} km",
-        ).add_to(nearest_layer)
 
     # Add all layers
     for lg in [layer_danger, layer_caution, layer_safe]:
@@ -433,18 +414,18 @@ def build_map(zones: list[dict]) -> "folium.Map":
         radius=40,
         blur=26,
         max_zoom=13,
-        name="🌡️ Risk Heatmap",
+        name="Risk Heatmap",
     ).add_to(m)
 
     # Danger alert banner
     danger_zones = [z["display_name"] for z in zones if z["risk_score"] >= 75]
     if danger_zones:
         m.get_root().html.add_child(folium.Element(
-            f'<div style="position:fixed;top:10px;left:50%;transform:translateX(-50%);"'
-            f'style="z-index:9999;background:#dc2626;color:#fff;padding:7px 20px;'
+            f'<div style="position:fixed;top:10px;left:50%;transform:translateX(-50%);'
+            f'z-index:9999;background:#dc2626;color:#fff;padding:7px 20px;'
             f'border-radius:24px;font-family:Inter,sans-serif;font-size:11px;'
             f'font-weight:700;box-shadow:0 4px 14px rgba(220,38,38,0.45);white-space:nowrap">'
-            f'⚠️ DANGER ALERT — {" · ".join(danger_zones)} — High risk for gig workers</div>'
+            f'DANGER ALERT -- {" - ".join(danger_zones[:6])}{"..." if len(danger_zones) > 6 else ""} -- High risk for gig workers</div>'
         ))
 
     # Legend
@@ -453,15 +434,15 @@ def build_map(zones: list[dict]) -> "folium.Map":
         'background:#0a0f1a;color:#fff;padding:12px 15px;border-radius:12px;'
         'font-family:Inter,sans-serif;font-size:11px;min-width:210px;'
         'border:1px solid rgba(255,255,255,0.1)">'
-        '<div style="font-size:13px;font-weight:800;margin-bottom:6px">🛵 OmniSight AI</div>'
-        '<div style="color:#6b7280;font-size:10px;margin-bottom:8px">Live · Updates every 15 min</div>'
+        '<div style="font-size:13px;font-weight:800;margin-bottom:6px">OmniSight AI</div>'
+        '<div style="color:#6b7280;font-size:10px;margin-bottom:8px">Live - Updates every 10 min - 20 Zones</div>'
         '<div style="margin:3px 0"><span style="background:#dc2626;color:#fff;'
-        'padding:1px 8px;border-radius:20px;font-weight:700;font-size:10px">DANGER</span> ≥75</div>'
+        'padding:1px 8px;border-radius:20px;font-weight:700;font-size:10px">DANGER</span> >=75</div>'
         '<div style="margin:3px 0"><span style="background:#f59e0b;color:#fff;'
-        'padding:1px 8px;border-radius:20px;font-weight:700;font-size:10px">CAUTION</span> 50–74</div>'
+        'padding:1px 8px;border-radius:20px;font-weight:700;font-size:10px">CAUTION</span> 50-74</div>'
         '<div style="margin:3px 0"><span style="background:#16a34a;color:#fff;'
         'padding:1px 8px;border-radius:20px;font-weight:700;font-size:10px">SAFE</span> &lt;50</div>'
-        '<div style="color:#6b7280;font-size:9px;margin-top:6px">⬤ 25km scan · Click markers for detail</div>'
+        '<div style="color:#6b7280;font-size:9px;margin-top:6px">Mumbai - Delhi - Kolkata - Chennai</div>'
         '</div>'
     ))
 
@@ -479,7 +460,7 @@ def build_map(zones: list[dict]) -> "folium.Map":
 
 def main() -> None:
     if not HAS_FOLIUM:
-        print("[OmniSight] ❌ folium not installed. Run: pip install folium pandas")
+        print("[OmniSight] folium not installed. Run: pip install folium pandas")
         sys.exit(1)
 
     print(f"[OmniSight] Fetching live zone scores from {HEATMAP_URL} ...")
@@ -491,16 +472,16 @@ def main() -> None:
     OUTPUT_HTML.parent.mkdir(parents=True, exist_ok=True)
     m.save(str(OUTPUT_HTML))
 
-    print(f"[OmniSight] ✅ Heatmap saved → {OUTPUT_HTML}")
-    print(f"[OmniSight]    Self-refresh JS injected — iframe will poll {HEATMAP_URL} every 15 min")
+    print(f"[OmniSight] Heatmap saved -> {OUTPUT_HTML}")
+    print(f"[OmniSight]    Self-refresh JS injected -- iframe will poll {HEATMAP_URL} every 10 min")
 
     # Print score summary
     print("\n  Zone Risk Summary:")
-    print(f"  {'Zone':<10} {'Name':<16} {'Score':>6}  {'Level'}")
-    print("  " + "-" * 46)
+    print(f"  {'Zone':<10} {'Name':<16} {'City':<10} {'Score':>6}  {'Level'}")
+    print("  " + "-" * 56)
     for z in zones:
         lbl, _ = risk_label(z["risk_score"])
-        print(f"  {z['id']:<10} {z['display_name']:<16} {z['risk_score']:>6.1f}  {lbl}")
+        print(f"  {z['id']:<10} {z['display_name']:<16} {z.get('city',''):<10} {z['risk_score']:>6.1f}  {lbl}")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_c50914f39423e373d9f776f3f1d6c082 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+    <script src="https://cdn.jsdelivr.net/gh/python-visualization/folium@main/folium/templates/leaflet_heat.min.js"></script>
+</head>
+<body>
+    
+    <div style="position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:9999;background:#dc2626;color:#fff;padding:7px 20px;border-radius:24px;font-family:Inter,sans-serif;font-size:11px;font-weight:700;box-shadow:0 4px 14px rgba(220,38,38,0.45);white-space:nowrap">DANGER ALERT -- Dharavi - Adyar - Kurla West - Andheri East - Bandra Kurla - Thane West -- High risk for gig workers</div>
+    <div style="position:fixed;bottom:30px;left:20px;z-index:9999;background:#0a0f1a;color:#fff;padding:12px 15px;border-radius:12px;font-family:Inter,sans-serif;font-size:11px;min-width:210px;border:1px solid rgba(255,255,255,0.1)"><div style="font-size:13px;font-weight:800;margin-bottom:6px">OmniSight AI</div><div style="color:#6b7280;font-size:10px;margin-bottom:8px">Live - Updates every 10 min - 20 Zones</div><div style="margin:3px 0"><span style="background:#dc2626;color:#fff;padding:1px 8px;border-radius:20px;font-weight:700;font-size:10px">DANGER</span> >=75</div><div style="margin:3px 0"><span style="background:#f59e0b;color:#fff;padding:1px 8px;border-radius:20px;font-weight:700;font-size:10px">CAUTION</span> 50-74</div><div style="margin:3px 0"><span style="background:#16a34a;color:#fff;padding:1px 8px;border-radius:20px;font-weight:700;font-size:10px">SAFE</span> &lt;50</div><div style="color:#6b7280;font-size:9px;margin-top:6px">Mumbai - Delhi - Kolkata - Chennai</div></div>
+    
+<div id="omni-refresh-banner"
+  style="position:fixed;bottom:0;left:0;right:0;z-index:9998;
+         background:rgba(10,15,26,0.92);color:#6b7280;
+         font-family:Inter,sans-serif;font-size:10px;
+         text-align:center;padding:4px 0;border-top:1px solid rgba(255,255,255,0.05)">
+  OmniSight AI -- Loading live risk data (20 zones)...
+</div>
+    
+<script>
+(function () {
+  const API_BASE       = "http://127.0.0.1:8000";
+  const REFRESH_MS     = 10 * 60 * 1000;   // 10 minutes
+  const HEATMAP_ENDPOINT = API_BASE + "/zones/risk/heatmap";
+
+  function labelFromScore(score) {
+    if (score >= 75) return { label: "DANGER",  color: "#dc2626" };
+    if (score >= 50) return { label: "CAUTION", color: "#f59e0b" };
+    return             { label: "SAFE",    color: "#16a34a" };
+  }
+
+  function buildPopup(z) {
+    const { label, color } = labelFromScore(z.risk_score);
+    return (
+      "<div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'>" +
+      "<div style='background:" + color + ";color:#fff;padding:6px 10px;" +
+        "border-radius:8px 8px 0 0;font-weight:700'>" +
+        z.id.toUpperCase().replace("_", " ") + " -- " + label + "</div>" +
+      "<div style='padding:8px 10px;border:1px solid #e5e7eb;" +
+        "border-top:none;border-radius:0 0 8px 8px'>" +
+        "<b>Area:</b> " + z.display_name + " | <b>City:</b> " + z.city + "<br/>" +
+        "<b>Risk Score:</b> <span style='color:" + color + ";font-weight:800;font-size:14px'>" +
+        z.risk_score.toFixed(1) + "</span>/100<br/>" +
+        "<b>Condition:</b> " + z.condition + "<br/>" +
+        "<b>Rain:</b> " + z.precip_mm + " mm | <b>Wind:</b> " + z.wind_kph + " kph" +
+      "</div></div>"
+    );
+  }
+
+  // Store references to Leaflet circle markers keyed by zone id
+  const markerMap = {};
+  function waitForMap(cb, attempts) {
+    attempts = attempts || 0;
+    const maps = Object.values(window).filter(v => v && v._leaflet_id && v._container);
+    if (maps.length > 0) { cb(maps[0]); return; }
+    if (attempts < 30) setTimeout(() => waitForMap(cb, attempts + 1), 500);
+  }
+
+  function refreshScores() {
+    fetch(HEATMAP_ENDPOINT)
+      .then(r => r.json())
+      .then(data => {
+        const zones = data.zones || [];
+        zones.forEach(z => {
+          const m = markerMap[z.id];
+          if (!m) return;
+          const { color } = labelFromScore(z.risk_score);
+          if (m.circle) {
+            m.circle.setStyle({ color: color, fillColor: color });
+            m.circle.setRadius(500 + z.risk_score * 11);
+          }
+          if (m.marker) {
+            m.marker.getPopup().setContent(buildPopup(z));
+          }
+        });
+
+        const banner = document.getElementById("omni-refresh-banner");
+        if (banner) {
+          const now = new Date().toLocaleString("en-IN", {timeZone:"Asia/Kolkata",hour12:true});
+          banner.textContent = "OmniSight AI -- Risk scores refreshed at " + now + " IST (" + zones.length + " zones)";
+        }
+      })
+      .catch(err => console.warn("[OmniSight] Refresh failed:", err));
+  }
+
+  waitForMap(function (map) {
+    map.eachLayer(function (layer) {
+      if (layer.options && layer.options.radius && layer.getTooltip) {
+        const tip = layer.getTooltip();
+        if (!tip) return;
+        const text = tip._content || "";
+        const match = text.match(/zone_\d+/i);
+        if (match) {
+          const zid = match[0].toLowerCase();
+          if (!markerMap[zid]) markerMap[zid] = {};
+          if (layer.options.radius > 20) markerMap[zid].circle = layer;
+          else markerMap[zid].marker = layer;
+        }
+      }
+    });
+  });
+
+  setInterval(refreshScores, REFRESH_MS);
+  console.log("[OmniSight] Self-refresh armed -- updating every 10 min from", HEATMAP_ENDPOINT);
+})();
+</script>
+    
+            <div class="folium-map" id="map_c50914f39423e373d9f776f3f1d6c082" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_c50914f39423e373d9f776f3f1d6c082 = L.map(
+                "map_c50914f39423e373d9f776f3f1d6c082",
+                {
+                    center: [22.5, 80.0],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 5,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+            L.control.scale().addTo(map_c50914f39423e373d9f776f3f1d6c082);
+
+            
+
+        
+    
+            var tile_layer_7ca22c4c1ab0339fe222605513b6df47 = L.tileLayer(
+                "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 20,
+  "maxNativeZoom": 20,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors \u0026copy; \u003ca href=\"https://carto.com/attributions\"\u003eCARTO\u003c/a\u003e",
+  "subdomains": "abcd",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_7ca22c4c1ab0339fe222605513b6df47.addTo(map_c50914f39423e373d9f776f3f1d6c082);
+        
+    
+            var feature_group_0b8ce441cca2aeaaddcb5baa5a729d75 = L.featureGroup(
+                {
+}
+            );
+        
+    
+            var circle_d7ea1f861de2a478bae3bf35dd344c57 = L.circle(
+                [19.0422, 72.8553],
+                {"bubblingMouseEvents": true, "color": "#dc2626", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#dc2626", "fillOpacity": 0.13, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 1580.15666, "stroke": true, "weight": 2.5}
+            ).addTo(feature_group_0b8ce441cca2aeaaddcb5baa5a729d75);
+        
+    
+            circle_d7ea1f861de2a478bae3bf35dd344c57.bindTooltip(
+                `<div>
+                     zone_1 [DANGER] Dharavi  98.2/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_58f4816be94491f3502f4af229d7c671 = L.circle(
+                [13.0067, 80.2572],
+                {"bubblingMouseEvents": true, "color": "#dc2626", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#dc2626", "fillOpacity": 0.13, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 1385.899641, "stroke": true, "weight": 2.5}
+            ).addTo(feature_group_0b8ce441cca2aeaaddcb5baa5a729d75);
+        
+    
+            circle_58f4816be94491f3502f4af229d7c671.bindTooltip(
+                `<div>
+                     zone_17 [DANGER] Adyar  80.5/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_3b743f6d65804c398318b36908aa2a77 = L.circle(
+                [19.0728, 72.8826],
+                {"bubblingMouseEvents": true, "color": "#dc2626", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#dc2626", "fillOpacity": 0.13, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 1579.442562, "stroke": true, "weight": 2.5}
+            ).addTo(feature_group_0b8ce441cca2aeaaddcb5baa5a729d75);
+        
+    
+            circle_3b743f6d65804c398318b36908aa2a77.bindTooltip(
+                `<div>
+                     zone_2 [DANGER] Kurla West  98.1/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_57482e1957b6432daa0df3628023a920 = L.circle(
+                [19.1136, 72.8697],
+                {"bubblingMouseEvents": true, "color": "#dc2626", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#dc2626", "fillOpacity": 0.13, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 1577.6091700000002, "stroke": true, "weight": 2.5}
+            ).addTo(feature_group_0b8ce441cca2aeaaddcb5baa5a729d75);
+        
+    
+            circle_57482e1957b6432daa0df3628023a920.bindTooltip(
+                `<div>
+                     zone_3 [DANGER] Andheri East  98.0/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_553af6ae68222ad2da740212c85e64e3 = L.circle(
+                [19.0596, 72.8656],
+                {"bubblingMouseEvents": true, "color": "#dc2626", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#dc2626", "fillOpacity": 0.13, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 1578.95018, "stroke": true, "weight": 2.5}
+            ).addTo(feature_group_0b8ce441cca2aeaaddcb5baa5a729d75);
+        
+    
+            circle_553af6ae68222ad2da740212c85e64e3.bindTooltip(
+                `<div>
+                     zone_4 [DANGER] Bandra Kurla  98.1/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_7e91db4337fc3f17a05b8f2a93a2029b = L.circle(
+                [19.1852, 72.971],
+                {"bubblingMouseEvents": true, "color": "#dc2626", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#dc2626", "fillOpacity": 0.13, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 1578.914012, "stroke": true, "weight": 2.5}
+            ).addTo(feature_group_0b8ce441cca2aeaaddcb5baa5a729d75);
+        
+    
+            circle_7e91db4337fc3f17a05b8f2a93a2029b.bindTooltip(
+                `<div>
+                     zone_5 [DANGER] Thane West  98.1/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            feature_group_0b8ce441cca2aeaaddcb5baa5a729d75.addTo(map_c50914f39423e373d9f776f3f1d6c082);
+        
+    
+            var feature_group_c3bdf66037ec6a2bd04175a9c4b912d9 = L.featureGroup(
+                {
+}
+            );
+        
+    
+            var circle_54091546d662ff06d9c39428764407a8 = L.circle(
+                [28.7495, 77.0565],
+                {"bubblingMouseEvents": true, "color": "#f59e0b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f59e0b", "fillOpacity": 0.13, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 1067.9903570000001, "stroke": true, "weight": 2.5}
+            ).addTo(feature_group_c3bdf66037ec6a2bd04175a9c4b912d9);
+        
+    
+            circle_54091546d662ff06d9c39428764407a8.bindTooltip(
+                `<div>
+                     zone_10 [CAUTION] Rohini  51.6/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_1d98a35d851093fd972baed06a170e28 = L.circle(
+                [22.58, 88.415],
+                {"bubblingMouseEvents": true, "color": "#f59e0b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f59e0b", "fillOpacity": 0.13, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 1219.5619860000002, "stroke": true, "weight": 2.5}
+            ).addTo(feature_group_c3bdf66037ec6a2bd04175a9c4b912d9);
+        
+    
+            circle_1d98a35d851093fd972baed06a170e28.bindTooltip(
+                `<div>
+                     zone_11 [CAUTION] Salt Lake  65.4/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_5aef3e74a52691b58e765c73400e79aa = L.circle(
+                [22.5958, 88.2636],
+                {"bubblingMouseEvents": true, "color": "#f59e0b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f59e0b", "fillOpacity": 0.13, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 1265.5754809999999, "stroke": true, "weight": 2.5}
+            ).addTo(feature_group_c3bdf66037ec6a2bd04175a9c4b912d9);
+        
+    
+            circle_5aef3e74a52691b58e765c73400e79aa.bindTooltip(
+                `<div>
+                     zone_12 [CAUTION] Howrah  69.6/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_4ae9f695d3d0ca5cf85bb8c389c86193 = L.circle(
+                [22.551, 88.353],
+                {"bubblingMouseEvents": true, "color": "#f59e0b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f59e0b", "fillOpacity": 0.13, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 1280.9575399999999, "stroke": true, "weight": 2.5}
+            ).addTo(feature_group_c3bdf66037ec6a2bd04175a9c4b912d9);
+        
+    
+            circle_4ae9f695d3d0ca5cf85bb8c389c86193.bindTooltip(
+                `<div>
+                     zone_13 [CAUTION] Park Street  71.0/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_85a0553692e2b98ffe828430de9a8889 = L.circle(
+                [22.499, 88.371],
+                {"bubblingMouseEvents": true, "color": "#f59e0b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f59e0b", "fillOpacity": 0.13, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 1223.674402, "stroke": true, "weight": 2.5}
+            ).addTo(feature_group_c3bdf66037ec6a2bd04175a9c4b912d9);
+        
+    
+            circle_85a0553692e2b98ffe828430de9a8889.bindTooltip(
+                `<div>
+                     zone_14 [CAUTION] Jadavpur  65.8/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_bd4104847e718bab06733607e0ae4a42 = L.circle(
+                [22.6352, 88.423],
+                {"bubblingMouseEvents": true, "color": "#f59e0b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f59e0b", "fillOpacity": 0.13, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 1147.265641, "stroke": true, "weight": 2.5}
+            ).addTo(feature_group_c3bdf66037ec6a2bd04175a9c4b912d9);
+        
+    
+            circle_bd4104847e718bab06733607e0ae4a42.bindTooltip(
+                `<div>
+                     zone_15 [CAUTION] Dum Dum  58.8/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_8334b45838d8d0aa76d3058b5f14eb14 = L.circle(
+                [13.0418, 80.2341],
+                {"bubblingMouseEvents": true, "color": "#f59e0b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f59e0b", "fillOpacity": 0.13, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 1060.955692, "stroke": true, "weight": 2.5}
+            ).addTo(feature_group_c3bdf66037ec6a2bd04175a9c4b912d9);
+        
+    
+            circle_8334b45838d8d0aa76d3058b5f14eb14.bindTooltip(
+                `<div>
+                     zone_16 [CAUTION] T. Nagar  51.0/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_8b09190b88842ec9e6a026f21c7363b2 = L.circle(
+                [12.9815, 80.218],
+                {"bubblingMouseEvents": true, "color": "#f59e0b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f59e0b", "fillOpacity": 0.13, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 1260.435929, "stroke": true, "weight": 2.5}
+            ).addTo(feature_group_c3bdf66037ec6a2bd04175a9c4b912d9);
+        
+    
+            circle_8b09190b88842ec9e6a026f21c7363b2.bindTooltip(
+                `<div>
+                     zone_19 [CAUTION] Velachery  69.1/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_f8ed7e1cf17224e2567cee3897f1bbf1 = L.circle(
+                [12.9249, 80.1],
+                {"bubblingMouseEvents": true, "color": "#f59e0b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f59e0b", "fillOpacity": 0.13, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 1054.925921, "stroke": true, "weight": 2.5}
+            ).addTo(feature_group_c3bdf66037ec6a2bd04175a9c4b912d9);
+        
+    
+            circle_f8ed7e1cf17224e2567cee3897f1bbf1.bindTooltip(
+                `<div>
+                     zone_20 [CAUTION] Tambaram  50.4/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_258cbc4f6377ada0df87470b6146bb8e = L.circle(
+                [28.6506, 77.23],
+                {"bubblingMouseEvents": true, "color": "#f59e0b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f59e0b", "fillOpacity": 0.13, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 1154.525762, "stroke": true, "weight": 2.5}
+            ).addTo(feature_group_c3bdf66037ec6a2bd04175a9c4b912d9);
+        
+    
+            circle_258cbc4f6377ada0df87470b6146bb8e.bindTooltip(
+                `<div>
+                     zone_6 [CAUTION] Chandni Chowk  59.5/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_51b4069f2a9a7b58dbcda3cedc26d927 = L.circle(
+                [28.57, 77.24],
+                {"bubblingMouseEvents": true, "color": "#f59e0b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f59e0b", "fillOpacity": 0.13, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 1058.20611, "stroke": true, "weight": 2.5}
+            ).addTo(feature_group_c3bdf66037ec6a2bd04175a9c4b912d9);
+        
+    
+            circle_51b4069f2a9a7b58dbcda3cedc26d927.bindTooltip(
+                `<div>
+                     zone_8 [CAUTION] Lajpat Nagar  50.7/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            feature_group_c3bdf66037ec6a2bd04175a9c4b912d9.addTo(map_c50914f39423e373d9f776f3f1d6c082);
+        
+    
+            var feature_group_c359f41cfbba69d8f05181ba6015c824 = L.featureGroup(
+                {
+}
+            );
+        
+    
+            var circle_5af2c579f73fdd43dc7973f23aab63b9 = L.circle(
+                [13.085, 80.21],
+                {"bubblingMouseEvents": true, "color": "#16a34a", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#16a34a", "fillOpacity": 0.13, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 990.472928, "stroke": true, "weight": 2.5}
+            ).addTo(feature_group_c359f41cfbba69d8f05181ba6015c824);
+        
+    
+            circle_5af2c579f73fdd43dc7973f23aab63b9.bindTooltip(
+                `<div>
+                     zone_18 [SAFE] Anna Nagar  44.6/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_664048a3ce6623a816fe39d224318838 = L.circle(
+                [28.6315, 77.2167],
+                {"bubblingMouseEvents": true, "color": "#16a34a", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#16a34a", "fillOpacity": 0.13, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 1042.0427650000001, "stroke": true, "weight": 2.5}
+            ).addTo(feature_group_c359f41cfbba69d8f05181ba6015c824);
+        
+    
+            circle_664048a3ce6623a816fe39d224318838.bindTooltip(
+                `<div>
+                     zone_7 [SAFE] Connaught Place  49.3/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_7aba4b008c6dd0065ae1f461bb3cf763 = L.circle(
+                [28.5921, 77.046],
+                {"bubblingMouseEvents": true, "color": "#16a34a", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#16a34a", "fillOpacity": 0.13, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 1046.1093110000002, "stroke": true, "weight": 2.5}
+            ).addTo(feature_group_c359f41cfbba69d8f05181ba6015c824);
+        
+    
+            circle_7aba4b008c6dd0065ae1f461bb3cf763.bindTooltip(
+                `<div>
+                     zone_9 [SAFE] Dwarka  49.6/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            feature_group_c359f41cfbba69d8f05181ba6015c824.addTo(map_c50914f39423e373d9f776f3f1d6c082);
+        
+    
+            var feature_group_e4c42142bfd5033ce3332b3e48b21780 = L.featureGroup(
+                {
+}
+            );
+        
+    
+            var circle_marker_ccccc85cc8fd4c3c59324a78f79e5880 = L.circleMarker(
+                [19.0422, 72.8553],
+                {"bubblingMouseEvents": true, "color": "#dc2626", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#dc2626", "fillOpacity": 0.88, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 17.819606, "stroke": true, "weight": 3}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+        var popup_a257fec649f43c4515fc25f76d263b8d = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_6e46f1f58245590c21a0869860a4da9d = $(`<div id="html_6e46f1f58245590c21a0869860a4da9d" style="width: 100.0%; height: 100.0%;"><div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'><div style='background:#dc2626;color:#fff;padding:6px 10px;border-radius:8px 8px 0 0;font-weight:700'>ZONE 1 -- DANGER</div><div style='padding:8px 10px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px'><b>Area:</b> Dharavi | <b>City:</b> Mumbai<br/><b>Risk Score:</b> <span style='color:#dc2626;font-weight:800;font-size:14px'>98.20</span>/100<br/><b>Condition:</b> Historical data<br/><b>Rain:</b> 0.0 mm | <b>Wind:</b> 0.0 kph<br/><b>Distance:</b> 836 km</div></div></div>`)[0];
+                popup_a257fec649f43c4515fc25f76d263b8d.setContent(html_6e46f1f58245590c21a0869860a4da9d);
+            
+        
+
+        circle_marker_ccccc85cc8fd4c3c59324a78f79e5880.bindPopup(popup_a257fec649f43c4515fc25f76d263b8d)
+        ;
+
+        
+    
+    
+            circle_marker_ccccc85cc8fd4c3c59324a78f79e5880.bindTooltip(
+                `<div>
+                     zone_1 | Dharavi | Mumbai | 98.2/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_3b4b1703fb69bc2a43083ca887d9a6d4 = L.marker(
+                [19.0422, 72.8553],
+                {
+}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+            var div_icon_454019cce6f1a8cdf98aedc2b6a109a7 = L.divIcon({
+  "html": "\u003cdiv style=\u0027background:#dc2626;color:#fff;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.3);margin-top:18px\u0027\u003eZONE 1 - 98\u003c/div\u003e",
+  "iconSize": [110, 22],
+  "iconAnchor": [55, 0],
+  "className": "empty",
+});
+        
+    
+                marker_3b4b1703fb69bc2a43083ca887d9a6d4.setIcon(div_icon_454019cce6f1a8cdf98aedc2b6a109a7);
+            
+    
+            var circle_marker_2af963ef2c7d14ab12d73de70817ee7c = L.circleMarker(
+                [28.7495, 77.0565],
+                {"bubblingMouseEvents": true, "color": "#f59e0b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f59e0b", "fillOpacity": 0.88, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 13.1635487, "stroke": true, "weight": 3}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+        var popup_898b8ff38626189d65c766485558af0b = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_1d6319cfe3c9c8e6bbcead42f05c2777 = $(`<div id="html_1d6319cfe3c9c8e6bbcead42f05c2777" style="width: 100.0%; height: 100.0%;"><div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'><div style='background:#f59e0b;color:#fff;padding:6px 10px;border-radius:8px 8px 0 0;font-weight:700'>ZONE 10 -- CAUTION</div><div style='padding:8px 10px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px'><b>Area:</b> Rohini | <b>City:</b> Delhi<br/><b>Risk Score:</b> <span style='color:#f59e0b;font-weight:800;font-size:14px'>51.64</span>/100<br/><b>Condition:</b> Historical data<br/><b>Rain:</b> 0.0 mm | <b>Wind:</b> 0.0 kph<br/><b>Distance:</b> 755 km</div></div></div>`)[0];
+                popup_898b8ff38626189d65c766485558af0b.setContent(html_1d6319cfe3c9c8e6bbcead42f05c2777);
+            
+        
+
+        circle_marker_2af963ef2c7d14ab12d73de70817ee7c.bindPopup(popup_898b8ff38626189d65c766485558af0b)
+        ;
+
+        
+    
+    
+            circle_marker_2af963ef2c7d14ab12d73de70817ee7c.bindTooltip(
+                `<div>
+                     zone_10 | Rohini | Delhi | 51.6/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_1cc2e4c3830146c26939a4ab442d9509 = L.marker(
+                [28.7495, 77.0565],
+                {
+}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+            var div_icon_532450194880dc83434c93596fc9772a = L.divIcon({
+  "html": "\u003cdiv style=\u0027background:#f59e0b;color:#fff;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.3);margin-top:18px\u0027\u003eZONE 10 - 52\u003c/div\u003e",
+  "iconSize": [110, 22],
+  "iconAnchor": [55, 0],
+  "className": "empty",
+});
+        
+    
+                marker_1cc2e4c3830146c26939a4ab442d9509.setIcon(div_icon_532450194880dc83434c93596fc9772a);
+            
+    
+            var circle_marker_6675fee93a3ded1efe88a88d202c886e = L.circleMarker(
+                [22.58, 88.415],
+                {"bubblingMouseEvents": true, "color": "#f59e0b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f59e0b", "fillOpacity": 0.88, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 14.5414726, "stroke": true, "weight": 3}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+        var popup_fe2c9a949f181a9647b5a36b5a7296b8 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_17a1ee155e529428814486ed847d7b1c = $(`<div id="html_17a1ee155e529428814486ed847d7b1c" style="width: 100.0%; height: 100.0%;"><div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'><div style='background:#f59e0b;color:#fff;padding:6px 10px;border-radius:8px 8px 0 0;font-weight:700'>ZONE 11 -- CAUTION</div><div style='padding:8px 10px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px'><b>Area:</b> Salt Lake | <b>City:</b> Kolkata<br/><b>Risk Score:</b> <span style='color:#f59e0b;font-weight:800;font-size:14px'>65.41</span>/100<br/><b>Condition:</b> Historical data<br/><b>Rain:</b> 0.0 mm | <b>Wind:</b> 0.0 kph<br/><b>Distance:</b> 864 km</div></div></div>`)[0];
+                popup_fe2c9a949f181a9647b5a36b5a7296b8.setContent(html_17a1ee155e529428814486ed847d7b1c);
+            
+        
+
+        circle_marker_6675fee93a3ded1efe88a88d202c886e.bindPopup(popup_fe2c9a949f181a9647b5a36b5a7296b8)
+        ;
+
+        
+    
+    
+            circle_marker_6675fee93a3ded1efe88a88d202c886e.bindTooltip(
+                `<div>
+                     zone_11 | Salt Lake | Kolkata | 65.4/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_0f580a46fc93131b628fa62effae59de = L.marker(
+                [22.58, 88.415],
+                {
+}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+            var div_icon_1047e524271cee632a76614f55da9da8 = L.divIcon({
+  "html": "\u003cdiv style=\u0027background:#f59e0b;color:#fff;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.3);margin-top:18px\u0027\u003eZONE 11 - 65\u003c/div\u003e",
+  "iconSize": [110, 22],
+  "iconAnchor": [55, 0],
+  "className": "empty",
+});
+        
+    
+                marker_0f580a46fc93131b628fa62effae59de.setIcon(div_icon_1047e524271cee632a76614f55da9da8);
+            
+    
+            var circle_marker_fe3d7f6ea35d11c179fb14690b1e952c = L.circleMarker(
+                [22.5958, 88.2636],
+                {"bubblingMouseEvents": true, "color": "#f59e0b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f59e0b", "fillOpacity": 0.88, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 14.9597771, "stroke": true, "weight": 3}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+        var popup_10cb535f8ccee1f27086401e621f9d01 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_0f5030933320ff30bc761f4cd94711af = $(`<div id="html_0f5030933320ff30bc761f4cd94711af" style="width: 100.0%; height: 100.0%;"><div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'><div style='background:#f59e0b;color:#fff;padding:6px 10px;border-radius:8px 8px 0 0;font-weight:700'>ZONE 12 -- CAUTION</div><div style='padding:8px 10px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px'><b>Area:</b> Howrah | <b>City:</b> Kolkata<br/><b>Risk Score:</b> <span style='color:#f59e0b;font-weight:800;font-size:14px'>69.60</span>/100<br/><b>Condition:</b> Historical data<br/><b>Rain:</b> 0.0 mm | <b>Wind:</b> 0.0 kph<br/><b>Distance:</b> 849 km</div></div></div>`)[0];
+                popup_10cb535f8ccee1f27086401e621f9d01.setContent(html_0f5030933320ff30bc761f4cd94711af);
+            
+        
+
+        circle_marker_fe3d7f6ea35d11c179fb14690b1e952c.bindPopup(popup_10cb535f8ccee1f27086401e621f9d01)
+        ;
+
+        
+    
+    
+            circle_marker_fe3d7f6ea35d11c179fb14690b1e952c.bindTooltip(
+                `<div>
+                     zone_12 | Howrah | Kolkata | 69.6/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_d70d3f71ed0e84e9375b4db9a44c29a4 = L.marker(
+                [22.5958, 88.2636],
+                {
+}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+            var div_icon_a21e7e4057292dd3de09121be8eb4f5a = L.divIcon({
+  "html": "\u003cdiv style=\u0027background:#f59e0b;color:#fff;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.3);margin-top:18px\u0027\u003eZONE 12 - 70\u003c/div\u003e",
+  "iconSize": [110, 22],
+  "iconAnchor": [55, 0],
+  "className": "empty",
+});
+        
+    
+                marker_d70d3f71ed0e84e9375b4db9a44c29a4.setIcon(div_icon_a21e7e4057292dd3de09121be8eb4f5a);
+            
+    
+            var circle_marker_62394d2b6b228bf2ccd91f2421a8de05 = L.circleMarker(
+                [22.551, 88.353],
+                {"bubblingMouseEvents": true, "color": "#f59e0b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f59e0b", "fillOpacity": 0.88, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 15.099613999999999, "stroke": true, "weight": 3}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+        var popup_92aaa5e9332e681f9fe43f802fbbdb51 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_74972535f5d510dd0c248b45497639b2 = $(`<div id="html_74972535f5d510dd0c248b45497639b2" style="width: 100.0%; height: 100.0%;"><div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'><div style='background:#f59e0b;color:#fff;padding:6px 10px;border-radius:8px 8px 0 0;font-weight:700'>ZONE 13 -- CAUTION</div><div style='padding:8px 10px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px'><b>Area:</b> Park Street | <b>City:</b> Kolkata<br/><b>Risk Score:</b> <span style='color:#f59e0b;font-weight:800;font-size:14px'>71.00</span>/100<br/><b>Condition:</b> Historical data<br/><b>Rain:</b> 0.0 mm | <b>Wind:</b> 0.0 kph<br/><b>Distance:</b> 858 km</div></div></div>`)[0];
+                popup_92aaa5e9332e681f9fe43f802fbbdb51.setContent(html_74972535f5d510dd0c248b45497639b2);
+            
+        
+
+        circle_marker_62394d2b6b228bf2ccd91f2421a8de05.bindPopup(popup_92aaa5e9332e681f9fe43f802fbbdb51)
+        ;
+
+        
+    
+    
+            circle_marker_62394d2b6b228bf2ccd91f2421a8de05.bindTooltip(
+                `<div>
+                     zone_13 | Park Street | Kolkata | 71.0/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_34ceef1ac5dc2f9b664b7c48306c077b = L.marker(
+                [22.551, 88.353],
+                {
+}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+            var div_icon_f66abbd0fba716be663a2859cd60afde = L.divIcon({
+  "html": "\u003cdiv style=\u0027background:#f59e0b;color:#fff;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.3);margin-top:18px\u0027\u003eZONE 13 - 71\u003c/div\u003e",
+  "iconSize": [110, 22],
+  "iconAnchor": [55, 0],
+  "className": "empty",
+});
+        
+    
+                marker_34ceef1ac5dc2f9b664b7c48306c077b.setIcon(div_icon_f66abbd0fba716be663a2859cd60afde);
+            
+    
+            var circle_marker_9aca262959e4ac0dd880fddfe9acf7f5 = L.circleMarker(
+                [22.499, 88.371],
+                {"bubblingMouseEvents": true, "color": "#f59e0b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f59e0b", "fillOpacity": 0.88, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 14.5788582, "stroke": true, "weight": 3}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+        var popup_2faefc79a4617633186da5d1f1f130ef = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_d90ff941c5a4d916da6f90c51f4a60a6 = $(`<div id="html_d90ff941c5a4d916da6f90c51f4a60a6" style="width: 100.0%; height: 100.0%;"><div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'><div style='background:#f59e0b;color:#fff;padding:6px 10px;border-radius:8px 8px 0 0;font-weight:700'>ZONE 14 -- CAUTION</div><div style='padding:8px 10px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px'><b>Area:</b> Jadavpur | <b>City:</b> Kolkata<br/><b>Risk Score:</b> <span style='color:#f59e0b;font-weight:800;font-size:14px'>65.79</span>/100<br/><b>Condition:</b> Historical data<br/><b>Rain:</b> 0.0 mm | <b>Wind:</b> 0.0 kph<br/><b>Distance:</b> 860 km</div></div></div>`)[0];
+                popup_2faefc79a4617633186da5d1f1f130ef.setContent(html_d90ff941c5a4d916da6f90c51f4a60a6);
+            
+        
+
+        circle_marker_9aca262959e4ac0dd880fddfe9acf7f5.bindPopup(popup_2faefc79a4617633186da5d1f1f130ef)
+        ;
+
+        
+    
+    
+            circle_marker_9aca262959e4ac0dd880fddfe9acf7f5.bindTooltip(
+                `<div>
+                     zone_14 | Jadavpur | Kolkata | 65.8/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_4eff7b499486160ab5b1f951bf97f92a = L.marker(
+                [22.499, 88.371],
+                {
+}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+            var div_icon_52d76db62fa01d622ffef589c005c327 = L.divIcon({
+  "html": "\u003cdiv style=\u0027background:#f59e0b;color:#fff;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.3);margin-top:18px\u0027\u003eZONE 14 - 66\u003c/div\u003e",
+  "iconSize": [110, 22],
+  "iconAnchor": [55, 0],
+  "className": "empty",
+});
+        
+    
+                marker_4eff7b499486160ab5b1f951bf97f92a.setIcon(div_icon_52d76db62fa01d622ffef589c005c327);
+            
+    
+            var circle_marker_96641000b527f3b7d0b720d51cd63273 = L.circleMarker(
+                [22.6352, 88.423],
+                {"bubblingMouseEvents": true, "color": "#f59e0b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f59e0b", "fillOpacity": 0.88, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 13.8842331, "stroke": true, "weight": 3}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+        var popup_1b8f84a943d944f79d3bdb11bf4faaf6 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_6dc7785c847be73692e4c6a6d4d7d979 = $(`<div id="html_6dc7785c847be73692e4c6a6d4d7d979" style="width: 100.0%; height: 100.0%;"><div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'><div style='background:#f59e0b;color:#fff;padding:6px 10px;border-radius:8px 8px 0 0;font-weight:700'>ZONE 15 -- CAUTION</div><div style='padding:8px 10px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px'><b>Area:</b> Dum Dum | <b>City:</b> Kolkata<br/><b>Risk Score:</b> <span style='color:#f59e0b;font-weight:800;font-size:14px'>58.84</span>/100<br/><b>Condition:</b> Historical data<br/><b>Rain:</b> 0.0 mm | <b>Wind:</b> 0.0 kph<br/><b>Distance:</b> 865 km</div></div></div>`)[0];
+                popup_1b8f84a943d944f79d3bdb11bf4faaf6.setContent(html_6dc7785c847be73692e4c6a6d4d7d979);
+            
+        
+
+        circle_marker_96641000b527f3b7d0b720d51cd63273.bindPopup(popup_1b8f84a943d944f79d3bdb11bf4faaf6)
+        ;
+
+        
+    
+    
+            circle_marker_96641000b527f3b7d0b720d51cd63273.bindTooltip(
+                `<div>
+                     zone_15 | Dum Dum | Kolkata | 58.8/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_167cfbe42f9abc1ae98637ea1b0cee25 = L.marker(
+                [22.6352, 88.423],
+                {
+}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+            var div_icon_ecb5836278d751a0e52b9a6957b3433e = L.divIcon({
+  "html": "\u003cdiv style=\u0027background:#f59e0b;color:#fff;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.3);margin-top:18px\u0027\u003eZONE 15 - 59\u003c/div\u003e",
+  "iconSize": [110, 22],
+  "iconAnchor": [55, 0],
+  "className": "empty",
+});
+        
+    
+                marker_167cfbe42f9abc1ae98637ea1b0cee25.setIcon(div_icon_ecb5836278d751a0e52b9a6957b3433e);
+            
+    
+            var circle_marker_53fdd1d54aa784de92bb964bf510086e = L.circleMarker(
+                [13.0418, 80.2341],
+                {"bubblingMouseEvents": true, "color": "#f59e0b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f59e0b", "fillOpacity": 0.88, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 13.0995972, "stroke": true, "weight": 3}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+        var popup_61da9216caede23503ea86a6cc5ff6d2 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_57ed1c2497b96b5e2644696029cd6fa4 = $(`<div id="html_57ed1c2497b96b5e2644696029cd6fa4" style="width: 100.0%; height: 100.0%;"><div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'><div style='background:#f59e0b;color:#fff;padding:6px 10px;border-radius:8px 8px 0 0;font-weight:700'>ZONE 16 -- CAUTION</div><div style='padding:8px 10px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px'><b>Area:</b> T. Nagar | <b>City:</b> Chennai<br/><b>Risk Score:</b> <span style='color:#f59e0b;font-weight:800;font-size:14px'>51.00</span>/100<br/><b>Condition:</b> Historical data<br/><b>Rain:</b> 0.0 mm | <b>Wind:</b> 0.0 kph<br/><b>Distance:</b> 1052 km</div></div></div>`)[0];
+                popup_61da9216caede23503ea86a6cc5ff6d2.setContent(html_57ed1c2497b96b5e2644696029cd6fa4);
+            
+        
+
+        circle_marker_53fdd1d54aa784de92bb964bf510086e.bindPopup(popup_61da9216caede23503ea86a6cc5ff6d2)
+        ;
+
+        
+    
+    
+            circle_marker_53fdd1d54aa784de92bb964bf510086e.bindTooltip(
+                `<div>
+                     zone_16 | T. Nagar | Chennai | 51.0/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_c5f4446e27c0d065dde0fda7a31703e3 = L.marker(
+                [13.0418, 80.2341],
+                {
+}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+            var div_icon_27aa18d0b955f218e8ef7eaa1d681761 = L.divIcon({
+  "html": "\u003cdiv style=\u0027background:#f59e0b;color:#fff;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.3);margin-top:18px\u0027\u003eZONE 16 - 51\u003c/div\u003e",
+  "iconSize": [110, 22],
+  "iconAnchor": [55, 0],
+  "className": "empty",
+});
+        
+    
+                marker_c5f4446e27c0d065dde0fda7a31703e3.setIcon(div_icon_27aa18d0b955f218e8ef7eaa1d681761);
+            
+    
+            var circle_marker_5fa17749f269c1942ce265c0ebbddb94 = L.circleMarker(
+                [13.0067, 80.2572],
+                {"bubblingMouseEvents": true, "color": "#dc2626", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#dc2626", "fillOpacity": 0.88, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 16.0536331, "stroke": true, "weight": 3}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+        var popup_56fa332cb5de996c0485f97f8ea62c37 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_08c62ad56445378203d4e601c676e3d3 = $(`<div id="html_08c62ad56445378203d4e601c676e3d3" style="width: 100.0%; height: 100.0%;"><div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'><div style='background:#dc2626;color:#fff;padding:6px 10px;border-radius:8px 8px 0 0;font-weight:700'>ZONE 17 -- DANGER</div><div style='padding:8px 10px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px'><b>Area:</b> Adyar | <b>City:</b> Chennai<br/><b>Risk Score:</b> <span style='color:#dc2626;font-weight:800;font-size:14px'>80.54</span>/100<br/><b>Condition:</b> Historical data<br/><b>Rain:</b> 0.0 mm | <b>Wind:</b> 0.0 kph<br/><b>Distance:</b> 1056 km</div></div></div>`)[0];
+                popup_56fa332cb5de996c0485f97f8ea62c37.setContent(html_08c62ad56445378203d4e601c676e3d3);
+            
+        
+
+        circle_marker_5fa17749f269c1942ce265c0ebbddb94.bindPopup(popup_56fa332cb5de996c0485f97f8ea62c37)
+        ;
+
+        
+    
+    
+            circle_marker_5fa17749f269c1942ce265c0ebbddb94.bindTooltip(
+                `<div>
+                     zone_17 | Adyar | Chennai | 80.5/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_3b71333d9a5a539899857930892a7e0f = L.marker(
+                [13.0067, 80.2572],
+                {
+}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+            var div_icon_ba4dc4b1c6d14c6856f65f54b86db0c4 = L.divIcon({
+  "html": "\u003cdiv style=\u0027background:#dc2626;color:#fff;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.3);margin-top:18px\u0027\u003eZONE 17 - 81\u003c/div\u003e",
+  "iconSize": [110, 22],
+  "iconAnchor": [55, 0],
+  "className": "empty",
+});
+        
+    
+                marker_3b71333d9a5a539899857930892a7e0f.setIcon(div_icon_ba4dc4b1c6d14c6856f65f54b86db0c4);
+            
+    
+            var circle_marker_ae75894c46c82e3734dca6719c4abc47 = L.circleMarker(
+                [13.085, 80.21],
+                {"bubblingMouseEvents": true, "color": "#16a34a", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#16a34a", "fillOpacity": 0.88, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 12.4588448, "stroke": true, "weight": 3}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+        var popup_9886606667b1d1c477839369912ec671 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_4dca3c8332ce533679f25391021eb3f6 = $(`<div id="html_4dca3c8332ce533679f25391021eb3f6" style="width: 100.0%; height: 100.0%;"><div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'><div style='background:#16a34a;color:#fff;padding:6px 10px;border-radius:8px 8px 0 0;font-weight:700'>ZONE 18 -- SAFE</div><div style='padding:8px 10px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px'><b>Area:</b> Anna Nagar | <b>City:</b> Chennai<br/><b>Risk Score:</b> <span style='color:#16a34a;font-weight:800;font-size:14px'>44.59</span>/100<br/><b>Condition:</b> Historical data<br/><b>Rain:</b> 0.0 mm | <b>Wind:</b> 0.0 kph<br/><b>Distance:</b> 1047 km</div></div></div>`)[0];
+                popup_9886606667b1d1c477839369912ec671.setContent(html_4dca3c8332ce533679f25391021eb3f6);
+            
+        
+
+        circle_marker_ae75894c46c82e3734dca6719c4abc47.bindPopup(popup_9886606667b1d1c477839369912ec671)
+        ;
+
+        
+    
+    
+            circle_marker_ae75894c46c82e3734dca6719c4abc47.bindTooltip(
+                `<div>
+                     zone_18 | Anna Nagar | Chennai | 44.6/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_cbb9d2a9b069c64959a571176ddfbff3 = L.marker(
+                [13.085, 80.21],
+                {
+}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+            var div_icon_5f9b93678b0102d1b2f167112104ea81 = L.divIcon({
+  "html": "\u003cdiv style=\u0027background:#16a34a;color:#fff;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.3);margin-top:18px\u0027\u003eZONE 18 - 45\u003c/div\u003e",
+  "iconSize": [110, 22],
+  "iconAnchor": [55, 0],
+  "className": "empty",
+});
+        
+    
+                marker_cbb9d2a9b069c64959a571176ddfbff3.setIcon(div_icon_5f9b93678b0102d1b2f167112104ea81);
+            
+    
+            var circle_marker_5e66fa629ef8df89fc9127bdcf0b55b9 = L.circleMarker(
+                [12.9815, 80.218],
+                {"bubblingMouseEvents": true, "color": "#f59e0b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f59e0b", "fillOpacity": 0.88, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 14.9130539, "stroke": true, "weight": 3}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+        var popup_460b59cee84dbc3950e4fc3ba9b7ed2e = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_8e0477e54b95cb7a80e17d1054df3edb = $(`<div id="html_8e0477e54b95cb7a80e17d1054df3edb" style="width: 100.0%; height: 100.0%;"><div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'><div style='background:#f59e0b;color:#fff;padding:6px 10px;border-radius:8px 8px 0 0;font-weight:700'>ZONE 19 -- CAUTION</div><div style='padding:8px 10px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px'><b>Area:</b> Velachery | <b>City:</b> Chennai<br/><b>Risk Score:</b> <span style='color:#f59e0b;font-weight:800;font-size:14px'>69.13</span>/100<br/><b>Condition:</b> Historical data<br/><b>Rain:</b> 0.0 mm | <b>Wind:</b> 0.0 kph<br/><b>Distance:</b> 1059 km</div></div></div>`)[0];
+                popup_460b59cee84dbc3950e4fc3ba9b7ed2e.setContent(html_8e0477e54b95cb7a80e17d1054df3edb);
+            
+        
+
+        circle_marker_5e66fa629ef8df89fc9127bdcf0b55b9.bindPopup(popup_460b59cee84dbc3950e4fc3ba9b7ed2e)
+        ;
+
+        
+    
+    
+            circle_marker_5e66fa629ef8df89fc9127bdcf0b55b9.bindTooltip(
+                `<div>
+                     zone_19 | Velachery | Chennai | 69.1/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_f08094b2ee103b87c3509cbd631f4a6b = L.marker(
+                [12.9815, 80.218],
+                {
+}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+            var div_icon_9d30d3dfa97933389185be4cb62f0ff3 = L.divIcon({
+  "html": "\u003cdiv style=\u0027background:#f59e0b;color:#fff;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.3);margin-top:18px\u0027\u003eZONE 19 - 69\u003c/div\u003e",
+  "iconSize": [110, 22],
+  "iconAnchor": [55, 0],
+  "className": "empty",
+});
+        
+    
+                marker_f08094b2ee103b87c3509cbd631f4a6b.setIcon(div_icon_9d30d3dfa97933389185be4cb62f0ff3);
+            
+    
+            var circle_marker_ed4415fec66e764262dea4fb50fe89c6 = L.circleMarker(
+                [19.0728, 72.8826],
+                {"bubblingMouseEvents": true, "color": "#dc2626", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#dc2626", "fillOpacity": 0.88, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 17.8131142, "stroke": true, "weight": 3}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+        var popup_e3b87af2927910e8e8c6ab5421c08979 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_17e47eb784d043f4b27220ef71f821e6 = $(`<div id="html_17e47eb784d043f4b27220ef71f821e6" style="width: 100.0%; height: 100.0%;"><div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'><div style='background:#dc2626;color:#fff;padding:6px 10px;border-radius:8px 8px 0 0;font-weight:700'>ZONE 2 -- DANGER</div><div style='padding:8px 10px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px'><b>Area:</b> Kurla West | <b>City:</b> Mumbai<br/><b>Risk Score:</b> <span style='color:#dc2626;font-weight:800;font-size:14px'>98.13</span>/100<br/><b>Condition:</b> Historical data<br/><b>Rain:</b> 0.0 mm | <b>Wind:</b> 0.0 kph<br/><b>Distance:</b> 832 km</div></div></div>`)[0];
+                popup_e3b87af2927910e8e8c6ab5421c08979.setContent(html_17e47eb784d043f4b27220ef71f821e6);
+            
+        
+
+        circle_marker_ed4415fec66e764262dea4fb50fe89c6.bindPopup(popup_e3b87af2927910e8e8c6ab5421c08979)
+        ;
+
+        
+    
+    
+            circle_marker_ed4415fec66e764262dea4fb50fe89c6.bindTooltip(
+                `<div>
+                     zone_2 | Kurla West | Mumbai | 98.1/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_3ee307855f0231e774f9e242a6090f76 = L.marker(
+                [19.0728, 72.8826],
+                {
+}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+            var div_icon_75de75af3d9b87c9c6e53b95dd958233 = L.divIcon({
+  "html": "\u003cdiv style=\u0027background:#dc2626;color:#fff;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.3);margin-top:18px\u0027\u003eZONE 2 - 98\u003c/div\u003e",
+  "iconSize": [110, 22],
+  "iconAnchor": [55, 0],
+  "className": "empty",
+});
+        
+    
+                marker_3ee307855f0231e774f9e242a6090f76.setIcon(div_icon_75de75af3d9b87c9c6e53b95dd958233);
+            
+    
+            var circle_marker_cac1813daea55116fc626c58f62f1a26 = L.circleMarker(
+                [12.9249, 80.1],
+                {"bubblingMouseEvents": true, "color": "#f59e0b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f59e0b", "fillOpacity": 0.88, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 13.0447811, "stroke": true, "weight": 3}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+        var popup_8972628933d561ed2ccdc5c1a71d4884 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_08eb2cf0512860c9a96a5f421604ede6 = $(`<div id="html_08eb2cf0512860c9a96a5f421604ede6" style="width: 100.0%; height: 100.0%;"><div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'><div style='background:#f59e0b;color:#fff;padding:6px 10px;border-radius:8px 8px 0 0;font-weight:700'>ZONE 20 -- CAUTION</div><div style='padding:8px 10px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px'><b>Area:</b> Tambaram | <b>City:</b> Chennai<br/><b>Risk Score:</b> <span style='color:#f59e0b;font-weight:800;font-size:14px'>50.45</span>/100<br/><b>Condition:</b> Historical data<br/><b>Rain:</b> 0.0 mm | <b>Wind:</b> 0.0 kph<br/><b>Distance:</b> 1065 km</div></div></div>`)[0];
+                popup_8972628933d561ed2ccdc5c1a71d4884.setContent(html_08eb2cf0512860c9a96a5f421604ede6);
+            
+        
+
+        circle_marker_cac1813daea55116fc626c58f62f1a26.bindPopup(popup_8972628933d561ed2ccdc5c1a71d4884)
+        ;
+
+        
+    
+    
+            circle_marker_cac1813daea55116fc626c58f62f1a26.bindTooltip(
+                `<div>
+                     zone_20 | Tambaram | Chennai | 50.4/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_e623bdf1d0a5d809a7ba2ea4c6c80a4b = L.marker(
+                [12.9249, 80.1],
+                {
+}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+            var div_icon_af382fb9bef2391e240d5205c0b60b40 = L.divIcon({
+  "html": "\u003cdiv style=\u0027background:#f59e0b;color:#fff;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.3);margin-top:18px\u0027\u003eZONE 20 - 50\u003c/div\u003e",
+  "iconSize": [110, 22],
+  "iconAnchor": [55, 0],
+  "className": "empty",
+});
+        
+    
+                marker_e623bdf1d0a5d809a7ba2ea4c6c80a4b.setIcon(div_icon_af382fb9bef2391e240d5205c0b60b40);
+            
+    
+            var circle_marker_06a0627b8a3b61cbb8335d13d4f6b052 = L.circleMarker(
+                [19.1136, 72.8697],
+                {"bubblingMouseEvents": true, "color": "#dc2626", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#dc2626", "fillOpacity": 0.88, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 17.796447, "stroke": true, "weight": 3}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+        var popup_4463b257f83794a4e6879953ff7a267e = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_bfa72dfe07637ccc0a21b0583d0fefa0 = $(`<div id="html_bfa72dfe07637ccc0a21b0583d0fefa0" style="width: 100.0%; height: 100.0%;"><div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'><div style='background:#dc2626;color:#fff;padding:6px 10px;border-radius:8px 8px 0 0;font-weight:700'>ZONE 3 -- DANGER</div><div style='padding:8px 10px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px'><b>Area:</b> Andheri East | <b>City:</b> Mumbai<br/><b>Risk Score:</b> <span style='color:#dc2626;font-weight:800;font-size:14px'>97.96</span>/100<br/><b>Condition:</b> Historical data<br/><b>Rain:</b> 0.0 mm | <b>Wind:</b> 0.0 kph<br/><b>Distance:</b> 831 km</div></div></div>`)[0];
+                popup_4463b257f83794a4e6879953ff7a267e.setContent(html_bfa72dfe07637ccc0a21b0583d0fefa0);
+            
+        
+
+        circle_marker_06a0627b8a3b61cbb8335d13d4f6b052.bindPopup(popup_4463b257f83794a4e6879953ff7a267e)
+        ;
+
+        
+    
+    
+            circle_marker_06a0627b8a3b61cbb8335d13d4f6b052.bindTooltip(
+                `<div>
+                     zone_3 | Andheri East | Mumbai | 98.0/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_17791727162d760a69e2d3eb84b6a978 = L.marker(
+                [19.1136, 72.8697],
+                {
+}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+            var div_icon_05a26169163768d59849192ca8f15a9d = L.divIcon({
+  "html": "\u003cdiv style=\u0027background:#dc2626;color:#fff;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.3);margin-top:18px\u0027\u003eZONE 3 - 98\u003c/div\u003e",
+  "iconSize": [110, 22],
+  "iconAnchor": [55, 0],
+  "className": "empty",
+});
+        
+    
+                marker_17791727162d760a69e2d3eb84b6a978.setIcon(div_icon_05a26169163768d59849192ca8f15a9d);
+            
+    
+            var circle_marker_7608d7531807afa3791cc98abf921688 = L.circleMarker(
+                [19.0596, 72.8656],
+                {"bubblingMouseEvents": true, "color": "#dc2626", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#dc2626", "fillOpacity": 0.88, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 17.808638000000002, "stroke": true, "weight": 3}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+        var popup_b2fab7357b47b030d9f12c90e2bb516f = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_6c8222e34000512c347bda42304230a3 = $(`<div id="html_6c8222e34000512c347bda42304230a3" style="width: 100.0%; height: 100.0%;"><div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'><div style='background:#dc2626;color:#fff;padding:6px 10px;border-radius:8px 8px 0 0;font-weight:700'>ZONE 4 -- DANGER</div><div style='padding:8px 10px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px'><b>Area:</b> Bandra Kurla | <b>City:</b> Mumbai<br/><b>Risk Score:</b> <span style='color:#dc2626;font-weight:800;font-size:14px'>98.09</span>/100<br/><b>Condition:</b> Historical data<br/><b>Rain:</b> 0.0 mm | <b>Wind:</b> 0.0 kph<br/><b>Distance:</b> 834 km</div></div></div>`)[0];
+                popup_b2fab7357b47b030d9f12c90e2bb516f.setContent(html_6c8222e34000512c347bda42304230a3);
+            
+        
+
+        circle_marker_7608d7531807afa3791cc98abf921688.bindPopup(popup_b2fab7357b47b030d9f12c90e2bb516f)
+        ;
+
+        
+    
+    
+            circle_marker_7608d7531807afa3791cc98abf921688.bindTooltip(
+                `<div>
+                     zone_4 | Bandra Kurla | Mumbai | 98.1/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_e9a1ff409e5194c1e4a3a624355f34f4 = L.marker(
+                [19.0596, 72.8656],
+                {
+}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+            var div_icon_8a17a3ed0dbfa0e7a94e9891bedbc09c = L.divIcon({
+  "html": "\u003cdiv style=\u0027background:#dc2626;color:#fff;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.3);margin-top:18px\u0027\u003eZONE 4 - 98\u003c/div\u003e",
+  "iconSize": [110, 22],
+  "iconAnchor": [55, 0],
+  "className": "empty",
+});
+        
+    
+                marker_e9a1ff409e5194c1e4a3a624355f34f4.setIcon(div_icon_8a17a3ed0dbfa0e7a94e9891bedbc09c);
+            
+    
+            var circle_marker_ee12da8f3e9f54b09cf0226ff281e7c1 = L.circleMarker(
+                [19.1852, 72.971],
+                {"bubblingMouseEvents": true, "color": "#dc2626", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#dc2626", "fillOpacity": 0.88, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 17.8083092, "stroke": true, "weight": 3}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+        var popup_a138dca8736b75022025ec6fea354741 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_30768f2ffadcca7e77d73367474ef75d = $(`<div id="html_30768f2ffadcca7e77d73367474ef75d" style="width: 100.0%; height: 100.0%;"><div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'><div style='background:#dc2626;color:#fff;padding:6px 10px;border-radius:8px 8px 0 0;font-weight:700'>ZONE 5 -- DANGER</div><div style='padding:8px 10px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px'><b>Area:</b> Thane West | <b>City:</b> Mumbai<br/><b>Risk Score:</b> <span style='color:#dc2626;font-weight:800;font-size:14px'>98.08</span>/100<br/><b>Condition:</b> Historical data<br/><b>Rain:</b> 0.0 mm | <b>Wind:</b> 0.0 kph<br/><b>Distance:</b> 818 km</div></div></div>`)[0];
+                popup_a138dca8736b75022025ec6fea354741.setContent(html_30768f2ffadcca7e77d73367474ef75d);
+            
+        
+
+        circle_marker_ee12da8f3e9f54b09cf0226ff281e7c1.bindPopup(popup_a138dca8736b75022025ec6fea354741)
+        ;
+
+        
+    
+    
+            circle_marker_ee12da8f3e9f54b09cf0226ff281e7c1.bindTooltip(
+                `<div>
+                     zone_5 | Thane West | Mumbai | 98.1/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_8e4b88547e247b19a0a0aba470f7f1a5 = L.marker(
+                [19.1852, 72.971],
+                {
+}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+            var div_icon_3d622e38cb4e2d863c24f5dab3a5c381 = L.divIcon({
+  "html": "\u003cdiv style=\u0027background:#dc2626;color:#fff;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.3);margin-top:18px\u0027\u003eZONE 5 - 98\u003c/div\u003e",
+  "iconSize": [110, 22],
+  "iconAnchor": [55, 0],
+  "className": "empty",
+});
+        
+    
+                marker_8e4b88547e247b19a0a0aba470f7f1a5.setIcon(div_icon_3d622e38cb4e2d863c24f5dab3a5c381);
+            
+    
+            var circle_marker_b83f406dfc598a0b2ee7a7f290984296 = L.circleMarker(
+                [28.6506, 77.23],
+                {"bubblingMouseEvents": true, "color": "#f59e0b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f59e0b", "fillOpacity": 0.88, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 13.9502342, "stroke": true, "weight": 3}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+        var popup_4427872434ec0e16f6613c4972f4255c = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_4269b56e5d7e55a64dccf307b7ee3b7a = $(`<div id="html_4269b56e5d7e55a64dccf307b7ee3b7a" style="width: 100.0%; height: 100.0%;"><div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'><div style='background:#f59e0b;color:#fff;padding:6px 10px;border-radius:8px 8px 0 0;font-weight:700'>ZONE 6 -- CAUTION</div><div style='padding:8px 10px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px'><b>Area:</b> Chandni Chowk | <b>City:</b> Delhi<br/><b>Risk Score:</b> <span style='color:#f59e0b;font-weight:800;font-size:14px'>59.50</span>/100<br/><b>Condition:</b> Historical data<br/><b>Rain:</b> 0.0 mm | <b>Wind:</b> 0.0 kph<br/><b>Distance:</b> 738 km</div></div></div>`)[0];
+                popup_4427872434ec0e16f6613c4972f4255c.setContent(html_4269b56e5d7e55a64dccf307b7ee3b7a);
+            
+        
+
+        circle_marker_b83f406dfc598a0b2ee7a7f290984296.bindPopup(popup_4427872434ec0e16f6613c4972f4255c)
+        ;
+
+        
+    
+    
+            circle_marker_b83f406dfc598a0b2ee7a7f290984296.bindTooltip(
+                `<div>
+                     zone_6 | Chandni Chowk | Delhi | 59.5/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_7cac4ce178a499885a3612e320fa98f7 = L.marker(
+                [28.6506, 77.23],
+                {
+}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+            var div_icon_49cdc394eb431a29d7e378508ee3e445 = L.divIcon({
+  "html": "\u003cdiv style=\u0027background:#f59e0b;color:#fff;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.3);margin-top:18px\u0027\u003eZONE 6 - 60\u003c/div\u003e",
+  "iconSize": [110, 22],
+  "iconAnchor": [55, 0],
+  "className": "empty",
+});
+        
+    
+                marker_7cac4ce178a499885a3612e320fa98f7.setIcon(div_icon_49cdc394eb431a29d7e378508ee3e445);
+            
+    
+            var circle_marker_20ae04f5a42e20451b98f1945c870c47 = L.circleMarker(
+                [28.6315, 77.2167],
+                {"bubblingMouseEvents": true, "color": "#16a34a", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#16a34a", "fillOpacity": 0.88, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 12.9276615, "stroke": true, "weight": 3}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+        var popup_d2ba2e54220422a4254a825fb1ee65b8 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_09c7e4316307752b07ab38ea32b93ad5 = $(`<div id="html_09c7e4316307752b07ab38ea32b93ad5" style="width: 100.0%; height: 100.0%;"><div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'><div style='background:#16a34a;color:#fff;padding:6px 10px;border-radius:8px 8px 0 0;font-weight:700'>ZONE 7 -- SAFE</div><div style='padding:8px 10px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px'><b>Area:</b> Connaught Place | <b>City:</b> Delhi<br/><b>Risk Score:</b> <span style='color:#16a34a;font-weight:800;font-size:14px'>49.28</span>/100<br/><b>Condition:</b> Historical data<br/><b>Rain:</b> 0.0 mm | <b>Wind:</b> 0.0 kph<br/><b>Distance:</b> 737 km</div></div></div>`)[0];
+                popup_d2ba2e54220422a4254a825fb1ee65b8.setContent(html_09c7e4316307752b07ab38ea32b93ad5);
+            
+        
+
+        circle_marker_20ae04f5a42e20451b98f1945c870c47.bindPopup(popup_d2ba2e54220422a4254a825fb1ee65b8)
+        ;
+
+        
+    
+    
+            circle_marker_20ae04f5a42e20451b98f1945c870c47.bindTooltip(
+                `<div>
+                     zone_7 | Connaught Place | Delhi | 49.3/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_320d4523e19472643c6e8dac8ad0a378 = L.marker(
+                [28.6315, 77.2167],
+                {
+}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+            var div_icon_910d0b2be8dd3acc79d6dca254398202 = L.divIcon({
+  "html": "\u003cdiv style=\u0027background:#16a34a;color:#fff;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.3);margin-top:18px\u0027\u003eZONE 7 - 49\u003c/div\u003e",
+  "iconSize": [110, 22],
+  "iconAnchor": [55, 0],
+  "className": "empty",
+});
+        
+    
+                marker_320d4523e19472643c6e8dac8ad0a378.setIcon(div_icon_910d0b2be8dd3acc79d6dca254398202);
+            
+    
+            var circle_marker_ac189801644e302def41ec4536e7ec29 = L.circleMarker(
+                [28.57, 77.24],
+                {"bubblingMouseEvents": true, "color": "#f59e0b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f59e0b", "fillOpacity": 0.88, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 13.074601, "stroke": true, "weight": 3}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+        var popup_8fd1e7764b180cf026808727ea98ae44 = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_315acdc4a3faef489f973f0a4bb60056 = $(`<div id="html_315acdc4a3faef489f973f0a4bb60056" style="width: 100.0%; height: 100.0%;"><div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'><div style='background:#f59e0b;color:#fff;padding:6px 10px;border-radius:8px 8px 0 0;font-weight:700'>ZONE 8 -- CAUTION</div><div style='padding:8px 10px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px'><b>Area:</b> Lajpat Nagar | <b>City:</b> Delhi<br/><b>Risk Score:</b> <span style='color:#f59e0b;font-weight:800;font-size:14px'>50.75</span>/100<br/><b>Condition:</b> Historical data<br/><b>Rain:</b> 0.0 mm | <b>Wind:</b> 0.0 kph<br/><b>Distance:</b> 729 km</div></div></div>`)[0];
+                popup_8fd1e7764b180cf026808727ea98ae44.setContent(html_315acdc4a3faef489f973f0a4bb60056);
+            
+        
+
+        circle_marker_ac189801644e302def41ec4536e7ec29.bindPopup(popup_8fd1e7764b180cf026808727ea98ae44)
+        ;
+
+        
+    
+    
+            circle_marker_ac189801644e302def41ec4536e7ec29.bindTooltip(
+                `<div>
+                     zone_8 | Lajpat Nagar | Delhi | 50.7/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_bb27de9b71fb6597c9ff96c17a208e41 = L.marker(
+                [28.57, 77.24],
+                {
+}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+            var div_icon_5793caafa2dac9749dbfd5db2cb41d83 = L.divIcon({
+  "html": "\u003cdiv style=\u0027background:#f59e0b;color:#fff;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.3);margin-top:18px\u0027\u003eZONE 8 - 51\u003c/div\u003e",
+  "iconSize": [110, 22],
+  "iconAnchor": [55, 0],
+  "className": "empty",
+});
+        
+    
+                marker_bb27de9b71fb6597c9ff96c17a208e41.setIcon(div_icon_5793caafa2dac9749dbfd5db2cb41d83);
+            
+    
+            var circle_marker_0a2715a7ee4d28ca4e41781424bb81aa = L.circleMarker(
+                [28.5921, 77.046],
+                {"bubblingMouseEvents": true, "color": "#16a34a", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#16a34a", "fillOpacity": 0.88, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 12.9646301, "stroke": true, "weight": 3}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+        var popup_4095623a00986353e3825f0122b6142d = L.popup({
+  "maxWidth": 280,
+});
+
+        
+            
+                var html_2b34fd5803948e71198e63b856c76ba4 = $(`<div id="html_2b34fd5803948e71198e63b856c76ba4" style="width: 100.0%; height: 100.0%;"><div style='font-family:Inter,sans-serif;font-size:12px;min-width:240px'><div style='background:#16a34a;color:#fff;padding:6px 10px;border-radius:8px 8px 0 0;font-weight:700'>ZONE 9 -- SAFE</div><div style='padding:8px 10px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px'><b>Area:</b> Dwarka | <b>City:</b> Delhi<br/><b>Risk Score:</b> <span style='color:#16a34a;font-weight:800;font-size:14px'>49.65</span>/100<br/><b>Condition:</b> Historical data<br/><b>Rain:</b> 0.0 mm | <b>Wind:</b> 0.0 kph<br/><b>Distance:</b> 739 km</div></div></div>`)[0];
+                popup_4095623a00986353e3825f0122b6142d.setContent(html_2b34fd5803948e71198e63b856c76ba4);
+            
+        
+
+        circle_marker_0a2715a7ee4d28ca4e41781424bb81aa.bindPopup(popup_4095623a00986353e3825f0122b6142d)
+        ;
+
+        
+    
+    
+            circle_marker_0a2715a7ee4d28ca4e41781424bb81aa.bindTooltip(
+                `<div>
+                     zone_9 | Dwarka | Delhi | 49.6/100
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_a943b42445ef0d846e22d752f2bfe2b0 = L.marker(
+                [28.5921, 77.046],
+                {
+}
+            ).addTo(feature_group_e4c42142bfd5033ce3332b3e48b21780);
+        
+    
+            var div_icon_65457a96d338f861bfa3f2077845fc69 = L.divIcon({
+  "html": "\u003cdiv style=\u0027background:#16a34a;color:#fff;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.3);margin-top:18px\u0027\u003eZONE 9 - 50\u003c/div\u003e",
+  "iconSize": [110, 22],
+  "iconAnchor": [55, 0],
+  "className": "empty",
+});
+        
+    
+                marker_a943b42445ef0d846e22d752f2bfe2b0.setIcon(div_icon_65457a96d338f861bfa3f2077845fc69);
+            
+    
+            feature_group_e4c42142bfd5033ce3332b3e48b21780.addTo(map_c50914f39423e373d9f776f3f1d6c082);
+        
+    
+            var feature_group_66040aeb748a8360df9a114c763a7358 = L.featureGroup(
+                {
+}
+            );
+        
+    
+            feature_group_66040aeb748a8360df9a114c763a7358.addTo(map_c50914f39423e373d9f776f3f1d6c082);
+        
+    
+            var heat_map_0e9130e78b81ed9d61e1f0c7ec36d2ea = L.heatLayer(
+                [[19.0422, 72.8553, 0.9819606000000001], [28.7495, 77.0565, 0.51635487], [22.58, 88.415, 0.65414726], [22.5958, 88.2636, 0.69597771], [22.551, 88.353, 0.7099614], [22.499, 88.371, 0.6578858200000001], [22.6352, 88.423, 0.58842331], [13.0418, 80.2341, 0.50995972], [13.0067, 80.2572, 0.80536331], [13.085, 80.21, 0.44588447999999997], [12.9815, 80.218, 0.69130539], [19.0728, 72.8826, 0.9813114199999999], [12.9249, 80.1, 0.50447811], [19.1136, 72.8697, 0.9796447], [19.0596, 72.8656, 0.9808638000000001], [19.1852, 72.971, 0.9808309199999999], [28.6506, 77.23, 0.59502342], [28.6315, 77.2167, 0.49276615], [28.57, 77.24, 0.5074601], [28.5921, 77.046, 0.49646301000000004]],
+                {
+  "minOpacity": 0.3,
+  "maxZoom": 13,
+  "radius": 40,
+  "blur": 26,
+}
+            );
+        
+    
+            heat_map_0e9130e78b81ed9d61e1f0c7ec36d2ea.addTo(map_c50914f39423e373d9f776f3f1d6c082);
+        
+    
+            var layer_control_68fde314a7bfd81030dbfc4a074d5207_layers = {
+                base_layers : {
+                    "cartodbpositron" : tile_layer_7ca22c4c1ab0339fe222605513b6df47,
+                },
+                overlays :  {
+                    "DANGER  \u003e=75" : feature_group_0b8ce441cca2aeaaddcb5baa5a729d75,
+                    "CAUTION 50-74" : feature_group_c3bdf66037ec6a2bd04175a9c4b912d9,
+                    "SAFE    \u003c50" : feature_group_c359f41cfbba69d8f05181ba6015c824,
+                    "Zone Markers" : feature_group_e4c42142bfd5033ce3332b3e48b21780,
+                    "Nearest Zone Links" : feature_group_66040aeb748a8360df9a114c763a7358,
+                    "Risk Heatmap" : heat_map_0e9130e78b81ed9d61e1f0c7ec36d2ea,
+                },
+            };
+            let layer_control_68fde314a7bfd81030dbfc4a074d5207 = L.control.layers(
+                layer_control_68fde314a7bfd81030dbfc4a074d5207_layers.base_layers,
+                layer_control_68fde314a7bfd81030dbfc4a074d5207_layers.overlays,
+                {
+  "position": "topright",
+  "collapsed": false,
+  "autoZIndex": true,
+}
+            ).addTo(map_c50914f39423e373d9f776f3f1d6c082);
+
+        
+</script>
+</html>

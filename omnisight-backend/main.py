@@ -1,3 +1,11 @@
+import sys
+import io
+
+if hasattr(sys.stdout, 'buffer'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+if hasattr(sys.stderr, 'buffer'):
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
 from fastapi import FastAPI, Depends, HTTPException, status,Response
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -101,15 +109,8 @@ def startup():
 # --- CORS CONFIGURATION ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "https://omni-sight-ai.vercel.app",
-        "https://omni-sight-ai-seven.vercel.app",
-        "http://127.0.0.1:5173"
-
-
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -656,7 +657,46 @@ def route_risk(lat: float, lon: float):
         "region": data["location"]["region"],   
         "country": data["location"]["country"]
     }
-    
+
+
+# ---------------------------------------------------------------------------
+# ZONE RISK — LIVE SCORING  (every 15 min, cached in-process)
+# ---------------------------------------------------------------------------
+
+@app.get("/zones/risk/live")
+def live_zone_risk():
+    """
+    Returns live 0-100 risk scores for all 20 pan-India zones.
+    Blend: XGBoost baseline 55% + live WeatherAPI 45%
+    Cached for 10 minutes in-process.
+    """
+    try:
+        zones = get_live_zone_scores()
+        return {
+            "zones":               zones,
+            "zone_count":          len(zones),
+            "update_interval_min": 10,
+            "scored_at":           zones[0]["scored_at"] if zones else None,
+        }
+    except Exception as exc:
+        logging.error("live_zone_risk failed: %s", exc)
+        raise HTTPException(status_code=500, detail="Zone risk scoring failed")
+
+
+@app.get("/zones/risk/heatmap")
+def live_heatmap_data():
+    """
+    Slim heatmap payload for 20 pan-India zones.
+    Consumed by the frontend ZoneRiskMap component.
+    Updates every 10 minutes with live weather data.
+    """
+    try:
+        return get_heatmap_payload()
+    except Exception as exc:
+        logging.error("live_heatmap_data failed: %s", exc)
+        raise HTTPException(status_code=500, detail="Heatmap data generation failed")
+
+
 @app.get("/traffic-tile/{z}/{x}/{y}")
 def traffic_tile(z: int, x: int, y: int):
     API_KEY = os.getenv("TOMTOM_API_KEY")
