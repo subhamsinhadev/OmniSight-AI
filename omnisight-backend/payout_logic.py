@@ -40,6 +40,9 @@ def process_payout(disruption_type: str, value: float, user, db):
         if not tier:
             print("❌ No payout tier triggered")
             return False
+        
+        # ALWAYS re-fetch user in SAME SESSION
+        db_user = db.query(User).filter(User.id == user.id).first()
 
         avg_income = user.avg_daily_income or 500
 
@@ -68,8 +71,10 @@ def process_payout(disruption_type: str, value: float, user, db):
             timestamp=datetime.now()
         )
 
+        db.add(db_user)
         db.add(payout_record)
         db.commit()
+        db.refresh(db_user)
 
         return True
 
