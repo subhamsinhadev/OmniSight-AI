@@ -276,7 +276,7 @@ const ZoneControlPanel = () => {
   const [cityFilter, setCityFilter] = useState("All");
   const [lastUpdate, setLastUpdate] = useState(null);
 
-  // Fetch live zone scores from API
+  // Fetch live zone scores from API, fallback to static JSON if offline
   const fetchScores = async () => {
     try {
       const res = await fetch(`${API_BASE}/zones/risk/heatmap`);
@@ -288,7 +288,17 @@ const ZoneControlPanel = () => {
         setLastUpdate(new Date());
       }
     } catch (err) {
-      console.warn("[OmniSight] Zone scores fetch failed:", err.message);
+      console.warn("[OmniSight] Live backend offline, falling back to static zones data.", err.message);
+      try {
+        const fallbackRes = await fetch('/zones_data.json');
+        const fallbackData = await fallbackRes.json();
+        if (fallbackData.zones && fallbackData.zones.length > 0) {
+          setScores(fallbackData.zones);
+          setLastUpdate(new Date());
+        }
+      } catch (fallbackErr) {
+        console.error("Static fallback also failed.", fallbackErr);
+      }
       setLoading(false);
     }
   };

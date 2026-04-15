@@ -472,7 +472,13 @@ def main() -> None:
     OUTPUT_HTML.parent.mkdir(parents=True, exist_ok=True)
     m.save(str(OUTPUT_HTML))
 
+    # Save a static JSON backup payload for graceful React fallback
+    json_path = OUTPUT_HTML.parent / "zones_data.json"
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump({"zones": zones}, f)
+
     print(f"[OmniSight] Heatmap saved -> {OUTPUT_HTML}")
+    print(f"[OmniSight] Fallback JSON saved -> {json_path}")
     print(f"[OmniSight]    Self-refresh JS injected -- iframe will poll {HEATMAP_URL} every 10 min")
 
     # Print score summary
