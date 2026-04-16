@@ -41,6 +41,13 @@ from fraud_engine import evaluate_claim
 from models import FraudLog,Subscription
 import razorpay
 
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
 
 app = FastAPI(title="OmniSight AI API")
 aqi_result_store = {
@@ -109,8 +116,15 @@ def startup():
 # --- CORS CONFIGURATION ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=[
+        "http://localhost:5173",
+        "https://omni-sight-ai.vercel.app",
+        "https://omni-sight-ai-seven.vercel.app",
+        "http://127.0.0.1:5173"
+
+
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -346,13 +360,18 @@ def fetch_aqi(city: str = "Asansol"):
         logging.error(f"Error fetching AQI: {e}")
         return random.randint(100, 400)
     
-
 def delayed_aqi_process(city: str = "Asansol"):
     try:
-        time.sleep(120)   # ✅ change here
+        print("🔥 delayed_aqi_process STARTED")
 
+        time.sleep(5)  # keep small for testing
+
+        print("⏳ Fetching AQI...")
         aqi = fetch_aqi(city)
+        print(f"📊 AQI Value: {aqi}")
+
         breached = aqi > AQI_THRESHOLD
+        print(f"🚨 Breached: {breached}")
 
         payout_info = None
 
@@ -360,69 +379,62 @@ def delayed_aqi_process(city: str = "Asansol"):
             logging.warning("Threshold breached")
 
             db = SessionLocal()
+            logging.info("🗄️ DB session started")
+
             users = db.query(User).filter(User.city == city).all()
+            logging.info(len(users))
+            logging.info(f"👥 Users found: {len(users)}")
 
             event_type = "AQI"
             value = aqi
             successful_payouts = 0
 
-            # ✅ STEP 1: CHECK KILL SWITCH
+            print("⚙️ Checking kill switch...")
             evaluate_kill_switch(db)
 
             if kill_switch_status["active"]:
-                logging.warning(f"🚨 KILL SWITCH ACTIVE: {kill_switch_status['reason']}")
+                print(f"🚨 KILL SWITCH ACTIVE: {kill_switch_status['reason']}")
                 db.close()
                 return
 
-            # ✅ STEP 2: PROCESS USERS
             for user in users:
+                print(f"➡️ Processing user {user.id}")
 
-                is_fraud = random.choice([True, False])
-                # 🔥 TEST MODE (remove later)
-                # is_fraud = True
-
-                if is_fraud:
-                    context = {
-                        "sudden_location_jump": True,
-                        "recent_activity": False,
-                        "is_emulator": True,
-                        "is_rooted": True,
-                        "suspicious_cluster": True,
-                        "network_mismatch": True
-                    }
-                else:
-                    context = {
-                        "sudden_location_jump": False,
-                        "recent_activity": True,
-                        "is_emulator": False,
-                        "is_rooted": False,
-                        "suspicious_cluster": False,
-                        "network_mismatch": False
-                    }
+                context = {
+                    "sudden_location_jump": False,
+                    "recent_activity": True,
+                    "is_emulator": False,
+                    "is_rooted": False,
+                    "suspicious_cluster": False,
+                    "network_mismatch": False
+                }
 
                 fraud_result = evaluate_claim(user, db, context)
+                print(f"🛡️ Risk: {fraud_result}")
 
-                logging.info(f"User {user.id} Risk: {fraud_result}")
-
-                # 🚨 TRUST BLOCK
                 if user.trust_score < 40:
+                    print("❌ Skipped: Low trust")
                     continue
 
-                # 🚨 FRAUD BLOCK
                 if fraud_result["risk_level"] == "HIGH":
+                    print("❌ Skipped: HIGH risk")
                     continue
 
-                # ⚠️ MEDIUM SKIP
                 if fraud_result["risk_level"] == "MEDIUM":
+                    print("⚠️ Skipped: MEDIUM risk")
                     continue
 
-                # ✅ PAYOUT
-                process_payout(event_type, value, user, db)
-                successful_payouts += 1
+                print("💰 Triggering payout...")
+                result = process_payout(event_type, value, user, db)
+
+                print(f"✅ Payout result: {result}")
+
+                if result:
+                    successful_payouts += 1
 
             db.close()
+            print("🧹 DB session closed")
 
-            # ✅ CREATE AFTER LOOP
             payout_info = {
                 "type": event_type,
                 "value": value,
@@ -430,25 +442,26 @@ def delayed_aqi_process(city: str = "Asansol"):
             }
 
         else:
+            print("✅ No breach")
             payout_info = {
                 "type": "AQI",
                 "value": aqi,
                 "status": "No breach"
             }
 
-        
-
-        # ✅ store result
         aqi_result_store.update({
             "aqi": aqi,
             "breached": breached,
             "payout": payout_info,
             "last_updated": datetime.now().isoformat()
         })
-        logging.info(f"AQI stored: {aqi}")
-    
+
+        print("📦 AQI result stored")
+
     except Exception as e:
-        logging.error(f"AQI Background Error: {e}")
+        import traceback
+        print("❌ AQI Background Error:", e)
+        traceback.print_exc()
 
 def calculate_device_risk(data: dict):
     risk = data.get("risk_score", 0)
@@ -529,16 +542,20 @@ def security_check(
     }
 
 
-
 @app.get("/aqi")
 def run_oracle(city: str = "Asansol"):
 
-    # start background process
-    thread = threading.Thread(target=delayed_aqi_process, args=(city,))
-    thread.daemon = True
+    print("🚀 /aqi endpoint hit")
+
+    thread = threading.Thread(
+        target=delayed_aqi_process,
+        args=(city,),
+        daemon=True
+    )
     thread.start()
 
-    # return latest available result instantly
+    print("🧵 Background thread started")
+
     return {
         "success": True,
         "message": "AQI check scheduled",

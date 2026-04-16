@@ -41,29 +41,29 @@ def process_payout(disruption_type: str, value: float, user, db):
             print("❌ No payout tier triggered")
             return False
         
-        # ALWAYS re-fetch user in SAME SESSION
+        # ✅ Always use SAME session object
         db_user = db.query(User).filter(User.id == user.id).first()
 
-        avg_income = user.avg_daily_income or 500
+        if not db_user:
+            print("❌ User not found in DB")
+            return False
+
+        avg_income = db_user.avg_daily_income or 500
 
         raw_amount = (
             Decimal(avg_income) * Decimal(tier["percent"]) / Decimal(100)
         )
 
-# 🔥 CAP LIMIT
         payout_amount = min(raw_amount, Decimal(200))
 
-        print(f"Before: {user.balance}")
-        user.balance = Decimal(user.balance or 0) + payout_amount
-        print(f"After: {user.balance}")
+        print(f"Before: {db_user.balance}") 
 
-        print(
-            f"💰 Paid ₹{payout_amount} to {user.name} "
-            f"({tier['level']} - {tier['percent']}%)"
-        )
+        db_user.balance = Decimal(db_user.balance or 0) + payout_amount
+
+        print(f"After: {db_user.balance}") 
 
         payout_record = Payout(
-            user_id=user.id,
+            user_id=db_user.id,
             amount=payout_amount,
             disruption_type=disruption_type,
             severity_level=tier["level"],
@@ -71,14 +71,17 @@ def process_payout(disruption_type: str, value: float, user, db):
             timestamp=datetime.now()
         )
 
-        db.add(db_user)
         db.add(payout_record)
         db.commit()
         db.refresh(db_user)
 
+        print(f"✅ Final Balance in DB: {db_user.balance}")
+
         return True
 
     except Exception as e:
+        import traceback
         print("Payout error:", e)
+        traceback.print_exc()
         db.rollback()
         return False
