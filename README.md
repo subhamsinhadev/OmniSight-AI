@@ -684,6 +684,40 @@ This creates a stronger, smarter, and more scalable anti-spoofing system that ca
 ![OmniSight AI AntiSpoofing](docs/AntiSpoof.png)
 
 ---
+##  Pitch Deck  – OmniSight AI (Devtrails Hackathon)
+
+
+[Open Pitch Deck](https://drive.google.com/file/d/1E_-wW-cCrZIn8p3NfZdIgdUKW9j-BOIo/view?usp=drivesdk)
+
+---
+
+###  Overview
+Team **NEURON KNIGHTS** presents OmniSight AI — an AI-powered parametric income protection platform designed for India’s gig delivery workforce.
+
+It automatically detects external disruptions such as weather, curfews, and platform outages, and triggers instant payouts without requiring manual claims.
+
+---
+
+###  Key Highlights
+-  AI-driven disruption detection  
+-  Multi-Signal Fraud Prevention Engine  
+-  Instant automated payouts  
+-  Weekly pricing model tailored for gig workers  
+
+---
+
+###  Business Model
+- Weekly subscription-based pricing  
+- Low-cost premiums for high adoption  
+- AI-driven risk optimization ensures sustainability  
+
+---
+
+###  Why It Matters
+- Protects 10M+ gig workers  
+- Reduces 20–30% income volatility  
+- Builds financial stability for the gig economy  
+---
 
 # Scope & Exclusions
 
